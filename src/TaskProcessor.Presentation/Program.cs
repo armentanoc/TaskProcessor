@@ -13,13 +13,19 @@ namespace TaskProcessor.Presentation
         static void Main(string[] args)
         {
             var serviceProvider = new ServiceCollection()
+                //General
                 .AddScoped(typeof(IRepository<>), typeof(EFRepository<>))
+                //Customer
                 .AddScoped<IRepositoryCustomer<Customer>, EFRepositoryCustomer>()
                 .AddScoped<CustomerService>()
+                //Address
                 .AddScoped<IRepositoryAddress<Address>, EFRepositoryAddress>()
                 .AddScoped<AddressService>()
+                //AppRunner
                 .AddScoped<AppRunner>()
+                //DbContext
                 .AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source=database_task_processor.db"))
+                //Build
                 .BuildServiceProvider();
 
             using (var scope = serviceProvider.CreateScope())
