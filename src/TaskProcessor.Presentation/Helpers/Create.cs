@@ -4,27 +4,27 @@ namespace TaskProcessor.Presentation.Helpers
 {
     internal class Create
     {
-        public static void Customer(CustomerService customerService)
+        public static void Customer(SubTaskService customerService)
         {
-            Console.WriteLine("\nEnter customer name:");
-            string customerName = Console.ReadLine();
+            //Console.WriteLine("\nEnter customer name:");
+            //string customerName = Console.ReadLine();
 
-            if (!string.IsNullOrEmpty(customerName))
-            {
-                try
-                {
-                    customerService.CreateCustomer(customerName);
-                    Console.WriteLine("Customer created successfully!");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error creating customer: {ex.Message}");
-                }
-            }
-            else
-            {
-                Console.WriteLine("Invalid customer name. Please provide a non-empty name.");
-            }
+            //if (!string.IsNullOrEmpty(customerName))
+            //{
+            //    try
+            //    {
+            //        customerService.CreateCustomer(customerName);
+            //        Console.WriteLine("Customer created successfully!");
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        Console.WriteLine($"Error creating customer: {ex.Message}");
+            //    }
+            //}
+            //else
+            //{
+            //    Console.WriteLine("Invalid customer name. Please provide a non-empty name.");
+            //}
         }
     }
 }

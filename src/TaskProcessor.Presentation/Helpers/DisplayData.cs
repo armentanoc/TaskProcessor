@@ -4,7 +4,7 @@
     {
         public static void Display(Func<IEnumerable<T>> getDataFunc)
         {
-            Console.WriteLine($"\n{typeof(T).Name}s:");
+            Console.WriteLine($"\nTabela {typeof(T).Name}:");
             var entities = getDataFunc.Invoke();
             foreach (var entity in entities)
             {

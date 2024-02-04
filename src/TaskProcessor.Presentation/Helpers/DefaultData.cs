@@ -5,14 +5,14 @@ namespace TaskProcessor.Presentation.Helpers
 {
     internal class DefaultData
     {
-        internal static void TryInserting(CustomerService customerService, AddressService addressService)
+        internal static void TryInserting(SubTaskService subTaskService, TaskService taskService)
         {
             try
             {
-                if (!customerService.GetAllCustomers().Any() && !addressService.GetAllAddresses().Any())
-                    InsertDefaultData(customerService, addressService);
+                if (!subTaskService.GetAllSubTasks().Any() && !taskService.GetAllTasks().Any())
+                    InsertDefaultData(subTaskService, taskService);
                 else
-                    Console.WriteLine("Customer and Address already exist. No changes made.");
+                    Console.WriteLine("TaskEntity and SubTaskEntity already exist. No changes made.");
             }
             catch (Exception ex)
             {
@@ -20,40 +20,16 @@ namespace TaskProcessor.Presentation.Helpers
             }
         }
 
-        private static void InsertDefaultData(CustomerService customerService, AddressService addressService)
+        private static void InsertDefaultData(SubTaskService subTaskService, TaskService taskService)
         {
-            InsertDefaultCustomer(customerService);
-            InsertDefaultAddress(addressService);
+            InsertDefaultTasks(subTaskService, taskService);
         }
 
-        private static void InsertDefaultAddress(AddressService addressService)
+        private static void InsertDefaultTasks(SubTaskService subTaskService, TaskService taskService)
         {
-            var addressDTO = new AddressPresentationDTO
-                (
-                    street: "123 Main St",
-                    number: 42,
-                    complement: "Apt 2",
-                    neighborhood: "Downtown",
-                    city: "Cityville",
-                    state: "ST",
-                    zipcode: "12345"
-                );
-
-            addressService.CreateAddress(addressDTO.Street, addressDTO.Number, addressDTO.Complement, addressDTO.Neighborhood, addressDTO.City, addressDTO.State, addressDTO.ZipCode);
-
-        }
-
-        private static void InsertDefaultCustomer(CustomerService customerService)
-        {
-            try
+            for (int i = 0; i < 5; i++) //transformar em configuração
             {
-                var customerDTO = new CustomerPresentationDTO("John Doe");
-                customerService.CreateCustomer(customerDTO.Name);
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error inserting default customer: " + ex.Message, ex.StackTrace);
+                taskService.CreateTask(subTaskService);
             }
         }
     }

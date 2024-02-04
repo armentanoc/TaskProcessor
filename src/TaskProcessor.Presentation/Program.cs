@@ -15,12 +15,12 @@ namespace TaskProcessor.Presentation
             var serviceProvider = new ServiceCollection()
                 //General
                 .AddScoped(typeof(IRepository<>), typeof(EFRepository<>))
-                //Customer
-                .AddScoped<IRepositoryCustomer<Customer>, EFRepositoryCustomer>()
-                .AddScoped<CustomerService>()
-                //Address
-                .AddScoped<IRepositoryAddress<Address>, EFRepositoryAddress>()
-                .AddScoped<AddressService>()
+                //Tasks
+                .AddScoped<IRepositoryTaskEntity<TaskEntity>, EFRepositoryTaskEntity>()
+                .AddScoped<TaskService>()
+                //Subtasks
+                .AddScoped<IRepositorySubTaskEntity<SubTaskEntity>, EFRepositorySubTaskEntity>()
+                .AddScoped<SubTaskService>()
                 //AppRunner
                 .AddScoped<AppRunner>()
                 //DbContext

@@ -6,23 +6,23 @@ namespace TaskProcessor.Presentation
 {
     public class AppRunner
     {
-        private readonly CustomerService _customerService;
-        private readonly AddressService _addressService;
+        private readonly SubTaskService _subTaskService;
+        private readonly TaskService _taskService;
 
-        public AppRunner(CustomerService customerService, AddressService addressService)
+        public AppRunner(SubTaskService subTaskService, TaskService taskService)
         {
-            _customerService = customerService;
-            _addressService = addressService;
+            _subTaskService = subTaskService;
+            _taskService = taskService;
         }
 
         public void Run()
         {
-            DefaultData.TryInserting(_customerService, _addressService);
+            DefaultData.TryInserting(_subTaskService, _taskService);
 
-            DisplayData<Customer>.Display(() => _customerService.GetAllCustomers());
-            DisplayData<Address>.Display(() => _addressService.GetAllAddresses());
+            //DisplayData<SubTaskEntity>.Display(() => _subTaskService.GetAllSubTasks());
+            DisplayData<TaskEntity>.Display(() => _taskService.GetAllTasks());
 
-            Create.Customer(_customerService);
+            //Create.Customer(_subTaskService);
 
             Console.WriteLine("\nWorks fine. Press any key to exit...");
             Console.ReadKey();
