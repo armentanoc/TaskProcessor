@@ -9,15 +9,15 @@ namespace TaskProcessor.Infra.Context
         {
             Database.EnsureCreated();
         }
-        public DbSet<Customer> Customers { get; set; }
-        public DbSet<Address> Addresses { get; set; }
+        public DbSet<TaskEntity> Tasks { get; set; }
+        public DbSet<SubTaskEntity> SubTasks{ get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Customer>()
+            modelBuilder.Entity<TaskEntity>()
                 .HasKey(c => c.Id)
                 .HasAnnotation("Sqlite:Autoincrement", true);
 
-            modelBuilder.Entity<Address>()
+            modelBuilder.Entity<SubTaskEntity>()
                 .HasKey(a => a.Id)
                 .HasAnnotation("Sqlite:Autoincrement", true);
             base.OnModelCreating(modelBuilder);
