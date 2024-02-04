@@ -22,7 +22,8 @@
         }
         private int GetRandomTotalSubTasks()
         {
-            return random.Next(10, 101);
+            //return random.Next(10, 101);//professor quer
+            return random.Next(5, 11);//meu teste
         }
 
         private TaskPriorityEnum GetRandomTaskPriority()
