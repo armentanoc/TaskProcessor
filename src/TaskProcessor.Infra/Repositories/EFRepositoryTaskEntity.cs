@@ -1,6 +1,5 @@
 ﻿using TaskProcessor.Domain.Interfaces;
 using TaskProcessor.Domain.Model;
-using TaskProcessor.Domain.Model.Enums;
 using TaskProcessor.Infra.Context;
 
 namespace TaskProcessor.Infra.Repositories
@@ -11,7 +10,7 @@ namespace TaskProcessor.Infra.Repositories
         {
             //required by EF
         }
-        public TaskEntityStatus GetStatusById(int id)
+        public TaskStatusEnum GetStatusById(int id)
         {
             return GetStatusById(id);
         }

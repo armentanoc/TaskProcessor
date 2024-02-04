@@ -33,6 +33,9 @@ namespace TaskProcessor.Presentation
                 .AddScoped<IRepositorySubTaskEntity<SubTaskEntity>, EFRepositorySubTaskEntity>()
                 .AddScoped<SubTaskService>()
 
+                //Task Execution
+                .AddScoped<TaskExecutionService>()
+
                 //AppRunner
                 .AddScoped<AppRunner>()
 

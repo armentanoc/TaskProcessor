@@ -1,19 +1,16 @@
-﻿
-using TaskProcessor.Domain.Model.Enums;
-
-namespace TaskProcessor.Domain.Model
+﻿namespace TaskProcessor.Domain.Model
 {
     public class TaskEntity : BaseEntity
     {
-        private Random random;
-        public TaskPriority Priority { get; set; }
-        public TaskEntityStatus Status { get; set; }
+        private readonly Random random = new Random();
+        public TaskPriorityEnum Priority { get; set; }
+        public TaskStatusEnum Status { get; set; }
         public int TotalSubTasks { get; set; }
         public int CompletedSubTasks { get; set; }
         public List<SubTaskEntity> SubTasks { get; set; }
         public TaskEntity()
         {
-            Status = TaskEntityStatus.Created;
+            Status = TaskStatusEnum.Created;
             Priority = GetRandomTaskPriority();
             TotalSubTasks = GetRandomTotalSubTasks();
             CompletedSubTasks = 0;
@@ -25,16 +22,14 @@ namespace TaskProcessor.Domain.Model
         }
         private int GetRandomTotalSubTasks()
         {
-            random = new Random();
             //return random.Next(10, 101); //professor pediu
             return random.Next(1, 5); //teste
         }
 
-        private TaskPriority GetRandomTaskPriority()
+        private TaskPriorityEnum GetRandomTaskPriority()
         {
-            Array values = Enum.GetValues(typeof(TaskPriority));
-            random = new Random();
-            TaskPriority randomPriority = (TaskPriority)values.GetValue(random.Next(values.Length));
+            Array values = Enum.GetValues(typeof(TaskPriorityEnum));
+            TaskPriorityEnum randomPriority = (TaskPriorityEnum)values.GetValue(random.Next(values.Length));
             return randomPriority;
         }
         public override string ToString()

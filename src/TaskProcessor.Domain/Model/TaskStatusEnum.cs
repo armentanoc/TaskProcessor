@@ -1,12 +1,12 @@
-﻿namespace TaskProcessor.Domain.Model.Enums
+﻿namespace TaskProcessor.Domain.Model
 {
-    public enum TaskEntityStatus
+    public enum TaskStatusEnum
     {
         Created = 1,
         Scheduled = 2,
         InProgress = 3,
         Paused = 4,
         Completed = 5,
-        Canceled = 6
+        Cancelled = 6
     }
 }
