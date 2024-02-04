@@ -32,3 +32,12 @@
 	- A quantidade de tarefas deverá ser uma configuração
 	- A quantidade que cada subtarefas pode ter deve ser uma configuração
 	- O tipo de armazenamento (ex.: Sqlite) e o nome do database deverá ser uma configuração 
+
+Ordenação de tarefas: 
+
+public IEnumerable<TaskEntity> GetAllTasksByPriorityAndNumberOfSubTasks()
+        {
+                return _taskEntityRepository.GetAll()
+                .OrderBy(task => task.Priority)
+                .ThenBy(task => task.TotalSubTasks);
+        }

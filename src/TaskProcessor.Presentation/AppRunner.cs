@@ -20,11 +20,14 @@ namespace TaskProcessor.Presentation
             DefaultData.TryInserting(_subTaskService, _taskService);
 
             //DisplayData<SubTaskEntity>.Display(() => _subTaskService.GetAllSubTasks());
-            DisplayData<TaskEntity>.Display(() => _taskService.GetAllTasks());
+            //DisplayData<TaskEntity>.Display(() => _taskService.GetAllTasks());
+
+            var tasksByPriority = _taskService.GetAllTasksByPriorityAndNumberOfSubTasks();
+            DisplayData<TaskEntity>.Display(() => tasksByPriority);
 
             //Create.Customer(_subTaskService);
 
-            Console.WriteLine("\nWorks fine. Press any key to exit...");
+            //Console.WriteLine("\nWorks fine. Press any key to exit...");
             Console.ReadKey();
         }
     }

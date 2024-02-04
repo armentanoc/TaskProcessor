@@ -16,6 +16,14 @@ namespace TaskProcessor.Application.Services
         public IEnumerable<TaskEntity> GetAllTasks()
         {
             return _taskEntityRepository.GetAll();
+
+        }
+
+        public IEnumerable<TaskEntity> GetAllTasksByPriorityAndNumberOfSubTasks()
+        {
+                return _taskEntityRepository.GetAll()
+                .OrderBy(task => task.Priority)
+                .ThenBy(task => task.TotalSubTasks);
         }
 
         public void CreateTask(SubTaskService subTaskService)
