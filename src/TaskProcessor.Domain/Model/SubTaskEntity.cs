@@ -20,7 +20,8 @@ namespace TaskProcessor.Domain.Model
 
         private TimeSpan GetRandomDuration()
         {
-            int seconds = random.Next(3, 61);
+            //int seconds = random.Next(3, 61); //professor quer
+            int seconds = random.Next(3, 10);
             return TimeSpan.FromSeconds(seconds);
         }
 
@@ -33,12 +34,6 @@ namespace TaskProcessor.Domain.Model
                 ElapsedTime = Duration;
                 Status = TaskStatusEnum.Completed;
             }
-        }
-
-        public void StartSubTask()
-        {
-            StartTime = DateTime.Now;
-            Status = TaskStatusEnum.InProgress;
         }
 
         public override string ToString()

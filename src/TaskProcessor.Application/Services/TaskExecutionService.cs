@@ -1,4 +1,6 @@
 ﻿
+using System.Net.NetworkInformation;
+using System.Threading.Tasks;
 using TaskProcessor.Application.Services;
 
 namespace TaskProcessor.Domain.Model
@@ -23,14 +25,41 @@ namespace TaskProcessor.Domain.Model
         }
         private async Task ExecuteTaskAsync(TaskEntity task)
         {
-            Log($"\nExecuting Task: {GetTaskInformation(task)}");
+            if (task.Status == TaskStatusEnum.Completed || task.Status == TaskStatusEnum.Cancelled)
+            {
+                return;
+            } else if(task.Status == TaskStatusEnum.InProgress)
+            {
+                Log($"\nRestarting Task: {GetTaskInformation(task)}");
+            } else
+            {
+                Log($"\nStarting Task: {GetTaskInformation(task)}");
+                AlterStatusToInProgress(task);
+            }
 
             var subTaskExecutionTasks = task.SubTasks
             .OrderByDescending(subTask => subTask.ElapsedTime)
             .Select(subTask => Task.Run(() => ExecuteSubTaskAsync(subTask, task)))
             .ToList();
             
-            Log($"Task Completed: {GetTaskInformation(task)}");
+        }
+
+        private void AlterStatusToInProgress(TaskEntity task)
+        {
+            task.Status = TaskStatusEnum.InProgress;
+            lock (_lockObject)
+            {
+                _taskService.Update(task);
+            }
+        }
+
+        private void AlterStatusToInProgress(SubTaskEntity task)
+        {
+            task.Status = TaskStatusEnum.InProgress;
+            lock (_lockObject)
+            {
+                _subtaskService.Update(task);
+            }
         }
 
         private string GetTaskInformation(TaskEntity task)
@@ -48,25 +77,30 @@ namespace TaskProcessor.Domain.Model
         private async Task ExecuteSubTaskAsync(SubTaskEntity subTask, TaskEntity parentTask)
         {
             Log($"\nStarting SubTask: {GetSubTaskInformation(subTask)}");
-
-            subTask.StartSubTask();
+            AlterStatusToInProgress(subTask);
 
             while (!IsCompleted(subTask))
             {
-                TryUpdatingElapsedTime(subTask);
+                TryUpdatingElapsedTime(subTask, parentTask);
                 Log($"\nSubTask Updated: {GetSubTaskInformation(subTask)}");
                 TryCompletingMainTask(subTask, parentTask);
             }
-            Log($"\nSubTask Completed: {GetSubTaskInformation(subTask)}");
-            Log($"Progress: {parentTask.CompletedSubTasks}/{parentTask.TotalSubTasks} subtasks completed for Task {parentTask.Id}");
         }
 
-        private void TryUpdatingElapsedTime(SubTaskEntity subTask)
+        private void TryUpdatingElapsedTime(SubTaskEntity subTask, TaskEntity parentTask)
         {
             lock (_lockObject)
             {
                 subTask.UpdateElapsedTime();
                 _subtaskService.Update(subTask);
+
+                if (subTask.ElapsedTime >= subTask.Duration)
+                {
+                    subTask.Status = TaskStatusEnum.Completed;
+                    parentTask.CompletedSubTasks++;
+                    Log($"\nSubTask Completed: {GetSubTaskInformation(subTask)}");
+                    Log($"Progress: {parentTask.CompletedSubTasks}/{parentTask.TotalSubTasks} subtasks completed for Task {parentTask.Id}");
+                }
             }
         }
 
@@ -74,14 +108,13 @@ namespace TaskProcessor.Domain.Model
         {
             if (!IsCompleted(parentTask))
             {
-                parentTask.CompletedSubTasks++;
-
                 if (parentTask.CompletedSubTasks == parentTask.TotalSubTasks)
                 {
                     parentTask.Status = TaskStatusEnum.Completed;
                     lock (_lockObject)
                     {
                         _taskService.Update(parentTask);
+                        Log($"Task Completed: {GetTaskInformation(parentTask)}");
                     }
                 }
             }
