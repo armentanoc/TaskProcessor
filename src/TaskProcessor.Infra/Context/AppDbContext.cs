@@ -14,12 +14,11 @@ namespace TaskProcessor.Infra.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<TaskEntity>()
-                .HasKey(c => c.Id)
-                .HasAnnotation("Sqlite:Autoincrement", true);
+                .HasKey(c => c.Id);
 
             modelBuilder.Entity<SubTaskEntity>()
-                .HasKey(a => a.Id)
-                .HasAnnotation("Sqlite:Autoincrement", true);
+                .HasKey(a => a.Id);
+
             base.OnModelCreating(modelBuilder);
         }
     }
