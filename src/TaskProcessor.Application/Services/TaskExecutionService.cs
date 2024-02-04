@@ -24,15 +24,15 @@ namespace TaskProcessor.Domain.Model
 
         private async Task ExecuteTaskAsync(TaskEntity task)
         {
-            Log($"\n({task.Priority}) Executing Task: {task.Id} with subtasks: {string.Join(", ", task.SubTasks.Select(subTask => $"SubTask Id: {subTask.Id}, Duration: {subTask.Duration.TotalSeconds}s"))}");
+            Log($"\n({task.Priority}) Executing Task: {task.Id} with subtasks: {string.Join(", ", task.SubTasks.Select(subTask => $"SubTask Id: {subTask.Id}, Duration: {subTask.Duration.TotalSeconds}s"))} (StartTime: at {DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff")})");
             var subTaskExecutionTasks = task.SubTasks.Select(subTask => ExecuteSubTaskAsync(subTask, task)).ToList();
             await Task.WhenAll(subTaskExecutionTasks);
-            Log($"Task Completed: {task.Id}");
+            Log($"Task Completed: {task.Id} at {DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff")}");
         }
 
         private async Task ExecuteSubTaskAsync(SubTaskEntity subTask, TaskEntity parentTask)
         {
-            Log($"\nExecuting SubTask: {subTask.Id}" +
+            Log($"\nExecuting SubTask: {subTask.Id} (StartTime: at {DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff")})" +
                 $" Duration: {subTask.Duration}" +
                 $" ElapsedTime: {subTask.ElapsedTime}");
 
@@ -40,7 +40,6 @@ namespace TaskProcessor.Domain.Model
 
             while (subTask.Status != TaskStatusEnum.Completed)
             {
-                Task.Delay(1000); // Wait for 1 second
                 subTask.UpdateElapsedTime();
                 _subtaskService.Update(subTask);
 
@@ -61,12 +60,11 @@ namespace TaskProcessor.Domain.Model
 
             }
             Log($"Progress: {parentTask.CompletedSubTasks}/{parentTask.TotalSubTasks} subtasks completed for Task {parentTask.Id}");
-            Log($"SubTask Completed: {subTask.Id}");
+            Log($"SubTask Completed: {subTask.Id} at {DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff")}");
         }
 
         private void Log(string message)
         {
-            // Replace with your logging mechanism (e.g., use a logging library)
             Console.WriteLine(message);
         }
 
