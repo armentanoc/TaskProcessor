@@ -5,6 +5,8 @@ using TaskProcessor.Infra.Repositories;
 using TaskProcessor.Application.Services;
 using TaskProcessor.Domain.Interfaces;
 using TaskProcessor.Domain.Model;
+using Microsoft.Extensions.Configuration;
+using TaskProcessor.Presentation.CustomExceptions;
 
 namespace TaskProcessor.Presentation
 {
@@ -12,19 +14,39 @@ namespace TaskProcessor.Presentation
     {
         static void Main(string[] args)
         {
+            IConfiguration configuration = BuildConfiguration();
+
+            var databaseSettings = configuration.GetSection("DatabaseConnection");
+            var connectionString = databaseSettings["ConnectionString"];
+            var provider = databaseSettings["Provider"];
+
             var serviceProvider = new ServiceCollection()
+
                 //General
                 .AddScoped(typeof(IRepository<>), typeof(EFRepository<>))
+
                 //Tasks
                 .AddScoped<IRepositoryTaskEntity<TaskEntity>, EFRepositoryTaskEntity>()
                 .AddScoped<TaskService>()
+
                 //Subtasks
                 .AddScoped<IRepositorySubTaskEntity<SubTaskEntity>, EFRepositorySubTaskEntity>()
                 .AddScoped<SubTaskService>()
+
                 //AppRunner
                 .AddScoped<AppRunner>()
+
                 //DbContext
-                .AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source=database_task_processor.db"))
+                .AddDbContext<AppDbContext>(options =>
+                {
+                    if (provider.Equals("sqlite", StringComparison.OrdinalIgnoreCase))
+                        options.UseSqlite(connectionString);
+                    else if (provider.Equals("sqlserver", StringComparison.OrdinalIgnoreCase))
+                        options.UseSqlServer(connectionString);
+                    else
+                        throw new UnsupportedDatabaseException();
+                })
+
                 //Build
                 .BuildServiceProvider();
 
@@ -33,6 +55,13 @@ namespace TaskProcessor.Presentation
                 var appRunner = scope.ServiceProvider.GetRequiredService<AppRunner>();
                 appRunner.Run();
             }
+        }
+
+        private static IConfiguration BuildConfiguration()
+        {
+           return new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .Build();
         }
     }
 }
