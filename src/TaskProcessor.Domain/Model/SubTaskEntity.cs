@@ -20,8 +20,7 @@ namespace TaskProcessor.Domain.Model
 
         private TimeSpan GetRandomDuration()
         {
-            //int seconds = random.Next(3, 61); //professor pediu
-            int seconds = random.Next(3, 5); //teste
+            int seconds = random.Next(3, 61);
             return TimeSpan.FromSeconds(seconds);
         }
 

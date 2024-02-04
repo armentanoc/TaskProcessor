@@ -17,7 +17,7 @@ namespace TaskProcessor.Presentation
             _taskExecutionService = taskExecutionService;
         }
 
-        public async void Run()
+        public async Task Run()
         {
             DefaultData.TryInserting(_subTaskService, _taskService);
 
@@ -28,6 +28,7 @@ namespace TaskProcessor.Presentation
             {
                 int topTasksCount = 2;
                 await _taskExecutionService.ExecuteTopTasksWithSubTasksAsync(topTasksCount);
+                Console.ReadLine();
             }
             catch (Exception ex)
             {
@@ -37,7 +38,6 @@ namespace TaskProcessor.Presentation
             //Create.Customer(_subTaskService);
 
             //Console.WriteLine("\nWorks fine. Press any key to exit...");
-            Console.ReadKey();
         }
     }
 }

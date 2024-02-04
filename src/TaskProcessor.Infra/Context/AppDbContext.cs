@@ -13,11 +13,9 @@ namespace TaskProcessor.Infra.Context
         public DbSet<SubTaskEntity> SubTasks{ get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<TaskEntity>()
-                .HasKey(c => c.Id);
+            modelBuilder.Entity<TaskEntity>().HasKey(c => c.Id);
 
-            modelBuilder.Entity<SubTaskEntity>()
-                .HasKey(a => a.Id);
+            modelBuilder.Entity<SubTaskEntity>().HasKey(a => a.Id);
 
             base.OnModelCreating(modelBuilder);
         }

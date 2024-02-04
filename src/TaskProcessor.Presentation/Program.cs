@@ -12,7 +12,7 @@ namespace TaskProcessor.Presentation
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             IConfiguration configuration = BuildConfiguration();
 
@@ -48,7 +48,7 @@ namespace TaskProcessor.Presentation
                         options.UseSqlServer(connectionString);
                     else
                         throw new UnsupportedDatabaseException();
-                })
+                }, ServiceLifetime.Scoped)
 
                 //Build
                 .BuildServiceProvider();
@@ -56,7 +56,7 @@ namespace TaskProcessor.Presentation
             using (var scope = serviceProvider.CreateScope())
             {
                 var appRunner = scope.ServiceProvider.GetRequiredService<AppRunner>();
-                appRunner.Run();
+                await appRunner.Run();
             }
         }
 
