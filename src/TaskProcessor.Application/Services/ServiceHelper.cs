@@ -34,9 +34,18 @@ namespace TaskProcessor.Application.Services
         {
             var completed = task.CompletedSubTasks;
             var total = task.TotalSubTasks;
-            LogWithColor(ConsoleColor.Blue, $"\nProgress: {completed}/{total} subtasks completed for Task {task.Id}");
+            var priorityColor = GetPriorityColor(task.Priority);
+            LogWithColor(priorityColor, $"\nProgress: {task.CompletedSubTasks}/{task.TotalSubTasks} subtasks completed for Task {task.Id} (Priority: {task.Priority})");
             LogProgressBar(completed, total);
         }
+        private static ConsoleColor GetPriorityColor(TaskPriorityEnum priority) =>
+            priority switch
+            {
+                TaskPriorityEnum.High => ConsoleColor.Red,
+                TaskPriorityEnum.Medium => ConsoleColor.Yellow,
+                TaskPriorityEnum.Low => ConsoleColor.Blue,
+                _ => ConsoleColor.White // Default color if priority is unknown
+            };
         public static void LogProgressBar(int completed, int total)
         {
             Console.Write("[");
