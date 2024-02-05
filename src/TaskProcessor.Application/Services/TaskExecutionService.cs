@@ -19,21 +19,28 @@ namespace TaskProcessor.Domain.Model
         public async Task ExecuteTopTasksWithSubTasksAsync(int topTasksCount)
         {
             var tasksByPriority = GetTopTasksByPriority(topTasksCount);
-            var executionTasks = tasksByPriority.Select(ExecuteTaskAsync).ToList();
-            await Task.WhenAll(executionTasks);
+            var executionTasks = tasksByPriority.Select(ExecuteTaskAsync);
+            await Task.WhenAll(executionTasks).ConfigureAwait(false);
         }
+
         private async Task ExecuteTaskAsync(TaskEntity task)
         {
             if (!(task.Status == TaskStatusEnum.InProgress))
-                    //ServiceHelper.Log($"\nStarting Task: {TaskService.GetTaskInformation(task)}");
-                    //logar essa informação
-                    AlterStatusToInProgress(_taskLockObject, _taskService, task);
+            {
+                //ServiceHelper.Log($"\nStarting Task: {TaskService.GetTaskInformation(task)}");
+                //logar essa informação
+                AlterStatusToInProgress(_taskLockObject, _taskService, task);
+            }
             else
+            {
                 //ServiceHelper.LogWithColor(ConsoleColor.Magenta, $"\nRestarting Task at {(task.CompletedSubTasks) / (task.TotalSubTasks)}: {TaskService.GetTaskInformation(task)}");
+            }
 
-            GetSubTasks(task)
-                .Select(subTask => Task.Run(() => ExecuteSubTaskAsync(subTask, task)))
+            var subTaskExecutionTasks = GetSubTasks(task)
+                .Select(subTask => ExecuteSubTaskAsync(subTask, task))
                 .ToList();
+
+            await Task.WhenAll(subTaskExecutionTasks).ConfigureAwait(false);
         }
 
         private IEnumerable<SubTaskEntity> GetSubTasks(TaskEntity task)

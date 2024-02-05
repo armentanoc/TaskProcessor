@@ -27,8 +27,12 @@ namespace TaskProcessor.Presentation
             try
             {
                 int topTasksCount = 2;
-                await _taskExecutionService.ExecuteTopTasksWithSubTasksAsync(topTasksCount);
-                _taskService.DisplayInformationAboutAllTasks();
+
+                Task displayTask = _taskService.DisplayInformationAboutAllTasksAsync();
+                Task executeTask = _taskExecutionService.ExecuteTopTasksWithSubTasksAsync(topTasksCount);
+
+                await Task.WhenAll(displayTask, executeTask);
+
                 Console.ReadLine();
             }
             catch (Exception ex)

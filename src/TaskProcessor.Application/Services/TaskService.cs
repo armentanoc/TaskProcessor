@@ -77,14 +77,24 @@ namespace TaskProcessor.Application.Services
             //$"SubTask Id: {subTask.Id}, Duration: {subTask.Duration.TotalSeconds}s"))} {GetDateTime()}";
         }
 
-        public void DisplayInformationAboutAllTasks()
+        public async Task DisplayInformationAboutAllTasksAsync()
         {
             while (!Console.KeyAvailable)
             {
                 Console.Clear();
-                GetAllTasks().ToList().ForEach(ServiceHelper.LogProgress);
-                Thread.Sleep(1000);
+                var tasks = await GetAllTasksAsync();
+                foreach (var task in tasks)
+                {
+                    ServiceHelper.LogProgress(task);
+                }
+                await Task.Delay(1000);
             }
+        }
+
+        private Task<List<TaskEntity>> GetAllTasksAsync()
+        {
+            var tasks = GetAllTasks().ToList();
+            return Task.FromResult(tasks);
         }
     }
 }
