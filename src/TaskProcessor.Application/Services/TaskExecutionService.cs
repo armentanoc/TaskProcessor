@@ -19,7 +19,7 @@ namespace TaskProcessor.Domain.Model
         public async Task ExecuteTopTasksWithSubTasksAsync(int topTasksCount)
         {
             var tasksByPriority = GetTopTasksByPriority(topTasksCount);
-            var executionTasks = tasksByPriority.Select(task => Task.Run(() => ExecuteTaskAsync(task))).ToList();
+            var executionTasks = tasksByPriority.Select(ExecuteTaskAsync).ToList();
             await Task.WhenAll(executionTasks);
         }
         private async Task ExecuteTaskAsync(TaskEntity task)
