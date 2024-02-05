@@ -1,13 +1,30 @@
-﻿using TaskProcessor.Domain.Interfaces;
+﻿using Microsoft.EntityFrameworkCore.Storage;
+using TaskProcessor.Domain.Interfaces;
 using TaskProcessor.Infra.Context;
 
 public class EFRepository<T> : IRepository<T> where T : class
 {
     private readonly AppDbContext _context;
+    private IDbContextTransaction _transaction;
 
     public EFRepository(AppDbContext context)
     {
         _context = context;
+    }
+
+    public void BeginTransaction()
+    {
+        _transaction = _context.Database.BeginTransaction();
+    }
+
+    public void CommitTransaction()
+    {
+        _transaction?.Commit();
+    }
+
+    public void RollbackTransaction()
+    {
+        _transaction?.Rollback();
     }
 
     public T GetById(int id)

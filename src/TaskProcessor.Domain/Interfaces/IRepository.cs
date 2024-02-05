@@ -8,5 +8,8 @@
         void Delete(int id);
 
         IEnumerable<T> GetAll();
+        void BeginTransaction();
+        void CommitTransaction();
+        void RollbackTransaction();
     }
 }

@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using TaskProcessor.Domain.Interfaces;
 using TaskProcessor.Domain.Model;
 
 namespace TaskProcessor.Infra.Context

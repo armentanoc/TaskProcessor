@@ -1,6 +1,4 @@
 ﻿
-using System.Net.NetworkInformation;
-using System.Threading.Tasks;
 using TaskProcessor.Application.Services;
 
 namespace TaskProcessor.Domain.Model
@@ -9,7 +7,8 @@ namespace TaskProcessor.Domain.Model
     {
         private readonly TaskService _taskService;
         private readonly SubTaskService _subtaskService;
-        private readonly object _lockObject = new object();
+        private readonly object _taskLockObject = new object();
+        private readonly object _subtaskLockObject = new object();
 
         public TaskExecutionService(TaskService taskService, SubTaskService subTaskService)
         {
@@ -25,48 +24,23 @@ namespace TaskProcessor.Domain.Model
         }
         private async Task ExecuteTaskAsync(TaskEntity task)
         {
-            if (task.Status == TaskStatusEnum.Completed || task.Status == TaskStatusEnum.Cancelled)
-            {
-                return;
-            } else if(task.Status == TaskStatusEnum.InProgress)
-            {
-                Log($"\nRestarting Task: {GetTaskInformation(task)}");
-            } else
-            {
-                Log($"\nStarting Task: {GetTaskInformation(task)}");
-                AlterStatusToInProgress(task);
-            }
+            if (!(task.Status == TaskStatusEnum.InProgress))
+                    //ServiceHelper.Log($"\nStarting Task: {TaskService.GetTaskInformation(task)}");
+                    //logar essa informação
+                    AlterStatusToInProgress(_taskLockObject, _taskService, task);
+            else
+                //ServiceHelper.LogWithColor(ConsoleColor.Magenta, $"\nRestarting Task at {(task.CompletedSubTasks) / (task.TotalSubTasks)}: {TaskService.GetTaskInformation(task)}");
 
-            var subTaskExecutionTasks = task.SubTasks
-            .OrderByDescending(subTask => subTask.ElapsedTime)
-            .Select(subTask => Task.Run(() => ExecuteSubTaskAsync(subTask, task)))
-            .ToList();
-            
+            GetSubTasks(task)
+                .Select(subTask => Task.Run(() => ExecuteSubTaskAsync(subTask, task)))
+                .ToList();
         }
 
-        private void AlterStatusToInProgress(TaskEntity task)
+        private IEnumerable<SubTaskEntity> GetSubTasks(TaskEntity task)
         {
-            task.Status = TaskStatusEnum.InProgress;
-            lock (_lockObject)
-            {
-                _taskService.Update(task);
-            }
-        }
-
-        private void AlterStatusToInProgress(SubTaskEntity task)
-        {
-            task.Status = TaskStatusEnum.InProgress;
-            lock (_lockObject)
-            {
-                _subtaskService.Update(task);
-            }
-        }
-
-        private string GetTaskInformation(TaskEntity task)
-        {
-            return $"Id {task.Id} - Priority {task.Priority} " +
-                $"\nSubtasks: {string.Join(", ", task.SubTasks.Select(subTask => subTask.Id))}";
-            //$"SubTask Id: {subTask.Id}, Duration: {subTask.Duration.TotalSeconds}s"))} {GetDateTime()}";
+            return task.SubTasks
+            .Where(subTask => !ServiceHelper.GetExcludedStatuses().Contains(subTask.Status))
+            .OrderByDescending(subTask => subTask.ElapsedTime);
         }
 
         private string GetDateTime()
@@ -76,20 +50,26 @@ namespace TaskProcessor.Domain.Model
 
         private async Task ExecuteSubTaskAsync(SubTaskEntity subTask, TaskEntity parentTask)
         {
-            Log($"\nStarting SubTask: {GetSubTaskInformation(subTask)}");
-            AlterStatusToInProgress(subTask);
+            //ServiceHelper.Log($"\nStarting SubTask: {GetSubTaskInformation(subTask)}");
+            //logar essa informação
+            AlterStatusToInProgress(_subtaskLockObject, _subtaskService, subTask);
 
-            while (!IsCompleted(subTask))
+            while (true)
             {
                 TryUpdatingElapsedTime(subTask, parentTask);
-                Log($"\nSubTask Updated: {GetSubTaskInformation(subTask)}");
                 TryCompletingMainTask(subTask, parentTask);
+                if (!ServiceHelper.IsCompleted(subTask))
+                    //ServiceHelper.LogWithColor(ConsoleColor.Cyan, $"\nSubTask Updated: {GetSubTaskInformation(subTask)}");
+                    await Task.Delay(1000);
+                //colocar essa informação em log apenas
+                else
+                    break;
             }
         }
 
         private void TryUpdatingElapsedTime(SubTaskEntity subTask, TaskEntity parentTask)
         {
-            lock (_lockObject)
+            lock (_subtaskLockObject)
             {
                 subTask.UpdateElapsedTime();
                 _subtaskService.Update(subTask);
@@ -98,36 +78,29 @@ namespace TaskProcessor.Domain.Model
                 {
                     subTask.Status = TaskStatusEnum.Completed;
                     parentTask.CompletedSubTasks++;
-                    Log($"\nSubTask Completed: {GetSubTaskInformation(subTask)}");
-                    Log($"Progress: {parentTask.CompletedSubTasks}/{parentTask.TotalSubTasks} subtasks completed for Task {parentTask.Id}");
+                    //ServiceHelper.LogWithColor(ConsoleColor.Green, $"\nSubTask Completed: {GetSubTaskInformation(subTask)}");
+                    //logar essa informação
+                    //ServiceHelper.LogProgress(parentTask);
+                    //logar essa informação
                 }
             }
         }
 
         private void TryCompletingMainTask(SubTaskEntity subTask, TaskEntity parentTask)
         {
-            if (!IsCompleted(parentTask))
+            if (!ServiceHelper.IsCompleted(parentTask))
             {
                 if (parentTask.CompletedSubTasks == parentTask.TotalSubTasks)
                 {
                     parentTask.Status = TaskStatusEnum.Completed;
-                    lock (_lockObject)
+                    lock (_taskLockObject)
                     {
                         _taskService.Update(parentTask);
-                        Log($"Task Completed: {GetTaskInformation(parentTask)}");
+                        //ServiceHelper.LogWithColor(ConsoleColor.Green, $"\nTask Completed: {TaskService.GetTaskInformation(parentTask)}");
+                        //logar essa informação
                     }
                 }
             }
-        }
-
-        private bool IsCompleted(TaskEntity task)
-        {
-            return task != null && task.Status == TaskStatusEnum.Completed;
-        }
-
-        private bool IsCompleted(SubTaskEntity task)
-        {
-            return task != null && task.Status == TaskStatusEnum.Completed;
         }
 
         private object GetSubTaskInformation(SubTaskEntity subTask)
@@ -139,17 +112,25 @@ namespace TaskProcessor.Domain.Model
                 $" ElapsedTime: {subTask.ElapsedTime}";
         }
 
-        private void Log(string message)
-        {
-            Console.WriteLine(message);
-        }
-
         private IEnumerable<TaskEntity> GetTopTasksByPriority(int topTasksCount)
         {
             return _taskService
-                .GetAllTasksByPriorityAndNumberOfSubTasks()
+                .GetAllTasksOrderedByPriority()
                 .Take(topTasksCount)
                 .ToList();
+        }
+        internal static void AlterStatusToInProgress(object lockObject, TaskService taskService, TaskEntity task)
+        {
+            task.Status = TaskStatusEnum.InProgress;
+            lock (lockObject)
+                taskService.Update(task);
+        }
+
+        internal static void AlterStatusToInProgress(object lockObject, SubTaskService subTaskService, SubTaskEntity task)
+        {
+            task.Status = TaskStatusEnum.InProgress;
+            lock (lockObject)
+                subTaskService.Update(task);
         }
     }
 }

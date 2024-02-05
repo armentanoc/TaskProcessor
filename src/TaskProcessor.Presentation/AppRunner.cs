@@ -23,11 +23,12 @@ namespace TaskProcessor.Presentation
 
             //DisplayData<SubTaskEntity>.Display(() => _subTaskService.GetAllSubTasks());
             //DisplayData<TaskEntity>.Display(() => _taskService.GetAllTasks());
-
+            //DisplayData<TaskEntity>.Display(() => _taskService.GetAllTasksOrderedByPriority());
             try
             {
                 int topTasksCount = 2;
                 await _taskExecutionService.ExecuteTopTasksWithSubTasksAsync(topTasksCount);
+                _taskService.DisplayInformationAboutAllTasks();
                 Console.ReadLine();
             }
             catch (Exception ex)

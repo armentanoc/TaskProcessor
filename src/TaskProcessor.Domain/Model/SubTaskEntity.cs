@@ -1,7 +1,9 @@
 ﻿
+using TaskProcessor.Domain.Interfaces;
+
 namespace TaskProcessor.Domain.Model
 {
-    public class SubTaskEntity : BaseEntity
+    public class SubTaskEntity : BaseEntity, IStatusCheckable
     {
         private readonly Random random = new Random();
         public TaskStatusEnum Status { get; set; }
@@ -20,8 +22,8 @@ namespace TaskProcessor.Domain.Model
 
         private TimeSpan GetRandomDuration()
         {
-            //int seconds = random.Next(3, 61); //professor quer
-            int seconds = random.Next(3, 10);
+            int seconds = random.Next(3, 61); //professor quer
+            //int seconds = random.Next(3, 10);
             return TimeSpan.FromSeconds(seconds);
         }
 

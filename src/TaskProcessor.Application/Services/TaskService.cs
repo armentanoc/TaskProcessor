@@ -4,7 +4,7 @@ using TaskProcessor.Domain.Model;
 
 namespace TaskProcessor.Application.Services
 {
-    public class TaskService : ITaskManager, ITaskProcessor
+    public class TaskService : IService<TaskEntity>
     {
         private readonly IRepository<TaskEntity> _taskEntityRepository;
 
@@ -20,12 +20,13 @@ namespace TaskProcessor.Application.Services
 
         }
 
-        public IEnumerable<TaskEntity> GetAllTasksByPriorityAndNumberOfSubTasks()
+        public IEnumerable<TaskEntity> GetAllTasksOrderedByPriority()
         {
-                return _taskEntityRepository.GetAll()
-                .Where(task => task.Status != TaskStatusEnum.Completed && task.Status != TaskStatusEnum.Cancelled)
-                .OrderBy(task => task.Priority)
-                .ThenBy(task => task.TotalSubTasks);
+            return _taskEntityRepository.GetAll()
+                .Where(task => !ServiceHelper.GetExcludedStatuses().Contains(task.Status)) //tasks to exclude
+                .OrderByDescending(task => task.Priority) //high, then medium, then low
+                .ThenByDescending(task => task.Status) //in progress, then scheduled, then created
+                .ThenBy(task => (task.TotalSubTasks - task.CompletedSubTasks)); //subtasks to execute
         }
 
         public void CreateTask(SubTaskService subTaskService)
@@ -38,7 +39,7 @@ namespace TaskProcessor.Application.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message, ex.StackTrace);
+                ServiceHelper.LogError(ex);
             }
         }
 
@@ -54,7 +55,7 @@ namespace TaskProcessor.Application.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message, ex.StackTrace);
+                ServiceHelper.LogError(ex);
             }
         }
 
@@ -66,52 +67,24 @@ namespace TaskProcessor.Application.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message, ex.StackTrace);
+                ServiceHelper.LogError(ex);
             }
-        }   
-        public Task Start(int idTask)
+        }
+        internal static string GetTaskInformation(TaskEntity task)
         {
-            throw new NotImplementedException();
+            return $"Id {task.Id} - Priority {task.Priority} " +
+                $"\nSubtasks: {string.Join(", ", task.SubTasks.Select(subTask => subTask.Id))}";
+            //$"SubTask Id: {subTask.Id}, Duration: {subTask.Duration.TotalSeconds}s"))} {GetDateTime()}";
         }
 
-        public Task Pause(int idTask)
+        public void DisplayInformationAboutAllTasks()
         {
-            throw new NotImplementedException();
-        }
-
-        public Task Stop(int idTask)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task Resume(int idTask)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task Cancel(int idTask)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<TaskEntity> Create()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<TaskEntity> Get(int idTarefa)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IEnumerable<TaskEntity>> GetActiveTasks()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IEnumerable<TaskEntity>> GetInactiveTasks()
-        {
-            throw new NotImplementedException();
+            while (!Console.KeyAvailable)
+            {
+                Console.Clear();
+                GetAllTasks().ToList().ForEach(ServiceHelper.LogProgress);
+                Thread.Sleep(1000);
+            }
         }
     }
 }

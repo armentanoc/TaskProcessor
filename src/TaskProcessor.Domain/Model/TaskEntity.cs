@@ -1,6 +1,8 @@
-﻿namespace TaskProcessor.Domain.Model
+﻿using TaskProcessor.Domain.Interfaces;
+
+namespace TaskProcessor.Domain.Model
 {
-    public class TaskEntity : BaseEntity
+    public class TaskEntity : BaseEntity, IStatusCheckable
     {
         private readonly Random random = new Random();
         public TaskPriorityEnum Priority { get; set; }
@@ -22,8 +24,8 @@
         }
         private int GetRandomTotalSubTasks()
         {
-            //return random.Next(10, 101);//professor quer
-            return random.Next(5, 11);//meu teste
+            return random.Next(10, 101);//professor quer
+            //return random.Next(5, 11);//meu teste
         }
 
         private TaskPriorityEnum GetRandomTaskPriority()
