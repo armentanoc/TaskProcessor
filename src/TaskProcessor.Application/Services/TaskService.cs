@@ -24,7 +24,7 @@ namespace TaskProcessor.Application.Services
         {
             return _taskEntityRepository.GetAll()
                 .Where(task => !ServiceHelper.GetExcludedStatuses().Contains(task.Status)) //tasks to exclude
-                .OrderByDescending(task => task.Priority) //high, then medium, then low
+                .OrderBy(task => task.Priority) //high, then medium, then low
                 .ThenByDescending(task => task.Status) //in progress, then scheduled, then created
                 .ThenBy(task => (task.TotalSubTasks - task.CompletedSubTasks)); //subtasks to execute
         }
