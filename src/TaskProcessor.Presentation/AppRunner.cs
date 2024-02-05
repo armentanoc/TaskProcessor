@@ -26,10 +26,10 @@ namespace TaskProcessor.Presentation
             //DisplayData<TaskEntity>.Display(() => _taskService.GetAllTasksOrderedByPriority());
             try
             {
-                int topTasksCount = 2;
+                int concurrentTasksCount = 2;
 
                 Task displayTask = _taskService.DisplayInformationAboutAllTasksAsync();
-                Task executeTask = _taskExecutionService.ExecuteTopTasksWithSubTasksAsync(topTasksCount);
+                Task executeTask = _taskExecutionService.ExecuteTopTasksWithSubTasksAsync(concurrentTasksCount);
 
                 await Task.WhenAll(displayTask, executeTask);
 

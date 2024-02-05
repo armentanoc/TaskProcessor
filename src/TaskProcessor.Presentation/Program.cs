@@ -48,7 +48,7 @@ namespace TaskProcessor.Presentation
                         options.UseSqlServer(connectionString);
                     else
                         throw new UnsupportedDatabaseException();
-                }, ServiceLifetime.Scoped)
+                }, ServiceLifetime.Transient)
 
                 //Build
                 .BuildServiceProvider();
