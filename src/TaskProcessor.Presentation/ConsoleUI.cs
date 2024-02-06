@@ -5,8 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using TaskProcessor.Application.Services;
 using TaskProcessor.Domain.Model;
+using TaskProcessor.Presentation.Helpers;
 
-namespace TaskProcessor.Presentation.Helpers
+namespace TaskProcessor.Presentation
 {
     internal class ConsoleUI
     {
@@ -15,25 +16,10 @@ namespace TaskProcessor.Presentation.Helpers
         public static async Task DisplayAsync(int totalTasks, Func<Task<IEnumerable<TaskEntity>>> value, TaskService taskService)
         {
             menuHeight = totalTasks * 3;
-            var progressTask = DisplayProgress(value);
+            var progressTask = DisplayData<TaskEntity>.DisplayProgress(value);
             var menuTask = DisplayMenu(taskService, value);
 
             await Task.WhenAll(progressTask, menuTask);
-        }
-
-        private static async Task DisplayProgress(Func<Task<IEnumerable<TaskEntity>>> value)
-        {
-            while (true)
-            {
-                var entities = await value.Invoke();
-                Console.SetCursorPosition(0, 0);
-                foreach (var entity in entities)
-                {
-                    ConsoleHelper.LogProgress(entity);
-                }
-
-                await Task.Delay(1000).ConfigureAwait(false);
-            }
         }
 
         private static async Task DisplayMenu(TaskService taskService, Func<Task<IEnumerable<TaskEntity>>> value)
