@@ -5,10 +5,8 @@ namespace TaskProcessor.Application.Services
 {
     internal class ServiceHelper
     {
-        //internal static bool IsDuplicateName(IRepositoryCustomer<Customer> customerRepository, string name)
-        //{
-        //    return customerRepository.GetByName(name) != null;
-        //}
+
+        private static object _fileLock = new object();
         public static void Write(string message)
         {
             Console.WriteLine(message);
@@ -53,6 +51,64 @@ namespace TaskProcessor.Application.Services
             double percentage = (double)completed / total * 100;
             Console.Write($"] {percentage:F1}%\n\r");
             Console.SetCursorPosition(0, Console.CursorTop);
+        }
+        private static void Log(string message)
+        {
+            string filePath = "log_task_execution_service.txt";
+
+            lock (_fileLock)
+            {
+                using (StreamWriter writer = new StreamWriter(filePath, true))
+                {
+                    writer.WriteLine(message);
+                }
+            }
+        }
+
+        internal static void LogStartTask(TaskEntity task)
+        {
+            Log($"\n[STARTED] Executing Task: {ServiceHelper.GetTaskInformation(task)}");
+        }
+
+        internal static void LogCompleteTask(TaskEntity task)
+        {
+            Log($"[COMPLETED] Task Completed: {ServiceHelper.GetTaskInformation(task)}");
+        }
+
+        internal static string GetDateTime()
+        {
+            return $"At {DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff")}";
+        }
+        internal static string GetSubTaskInformation(SubTaskEntity subTask)
+        {
+            return
+                $"[INFO] {subTask.Id} {GetDateTime()}" +
+                $" Duration: {subTask.Duration}" +
+                $" ElapsedTime: {subTask.ElapsedTime}";
+        }
+        internal static string GetTaskInformation(TaskEntity task)
+        {
+            return $"[INFO] Id {task.Id} - Priority {task.Priority}" +
+                $"\nSubtasks: {string.Join(", ", task.SubTasks.Select(subTask => $"SubTask Id: {subTask.Id}, Duration: {subTask.Duration.TotalSeconds}s"))} {GetDateTime()}";
+        }
+        internal static void LogUpdateSubTask(SubTaskEntity subTask)
+        {
+            Log($"\n[UPDATE] SubTask Updated: {ServiceHelper.GetSubTaskInformation(subTask)}");
+        }
+
+        internal static void LogStartSubTask(SubTaskEntity subTask)
+        {
+            Log($"\n[STARTED] Executing SubTask: {ServiceHelper.GetSubTaskInformation(subTask)}");
+        }
+
+        internal static void LogTaskProgress(TaskEntity parentTask)
+        {
+            Log($"\n[TASK PROGRESS] Progress: {parentTask.CompletedSubTasks}/{parentTask.TotalSubTasks} subtasks completed for Task {parentTask.Id}");
+        }
+
+        internal static void LogCompleteSubTask(SubTaskEntity subTask)
+        {
+            Log($"\n[COMPLETED] SubTask Completed: {ServiceHelper.GetSubTaskInformation(subTask)}");
         }
     }
 }
