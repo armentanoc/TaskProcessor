@@ -14,54 +14,65 @@ namespace TaskProcessor.Presentation
     {
         static async Task Main(string[] args)
         {
-            IConfiguration configuration = BuildConfiguration();
-
-            var databaseSettings = configuration.GetSection("DatabaseConnection");
-            var connectionString = databaseSettings["ConnectionString"];
-            var provider = databaseSettings["Provider"];
-
-            var taskSettings = configuration.GetSection("TaskSettings");
-            var numberOfTasksToBeGenerated = taskSettings["NumberOfTasks"];    
-
-            var serviceProvider = new ServiceCollection()
-
-                //General
-                .AddScoped(typeof(IRepository<>), typeof(EFRepository<>))
-
-                //Tasks
-                .AddScoped<IRepositoryTaskEntity<TaskEntity>, EFRepositoryTaskEntity>()
-                .AddScoped<TaskService>()
-
-                //Subtasks
-                .AddScoped<IRepositorySubTaskEntity<SubTaskEntity>, EFRepositorySubTaskEntity>()
-                .AddScoped<SubTaskService>()
-
-                //Task Execution
-                .AddScoped<TaskExecutionService>()
-
-                //AppRunner
-                .AddScoped<AppRunner>()
-
-                  //DbContext
-                  .AddDbContext<AppDbContext>(options =>
-                  {
-                      options.UseInMemoryDatabase("MemoryDatabase");
-                  }, ServiceLifetime.Scoped)
-
-                //Build
-                .BuildServiceProvider();
-
-            using (var scope = serviceProvider.CreateScope())
+            try
             {
-                try
+                IConfiguration configuration = BuildConfiguration();
+
+                //DatabaseSettings
+                var databaseSettings = configuration.GetSection("DatabaseConnection");
+                var connectionString = databaseSettings["ConnectionString"];
+                var provider = databaseSettings["Provider"];
+
+                //TaskSettings
+                var taskSettings = configuration.GetSection("TaskSettings");
+                var numberOfTasksToBeGenerated = int.Parse(taskSettings["NumberOfTasksToBeCreated"]);
+                var numberOfTasksToBeExecutedAtATime = int.Parse(taskSettings["TasksToBeExecutedAtATime"]);
+
+                //ServiceProvider
+                var serviceProvider = new ServiceCollection()
+
+                    //General
+                    .AddScoped(typeof(IRepository<>), typeof(EFRepository<>))
+
+                    //Tasks
+                    .AddScoped<IRepositoryTaskEntity<TaskEntity>, EFRepositoryTaskEntity>()
+                    .AddScoped<TaskService>()
+
+                    //Subtasks
+                    .AddScoped<IRepositorySubTaskEntity<SubTaskEntity>, EFRepositorySubTaskEntity>()
+                    .AddScoped<SubTaskService>()
+
+                    //Task Execution
+                    .AddScoped<TaskExecutionService>()
+
+                    //AppRunner
+                    .AddScoped<AppRunner>()
+
+                      //DbContext
+                      .AddDbContext<AppDbContext>(options =>
+                      {
+                          if (provider.Equals("memorydatabase", StringComparison.InvariantCultureIgnoreCase))
+                          {
+                              options.UseInMemoryDatabase("MemoryDatabase");
+                          }
+                          else
+                          {
+                              throw new UnsupportedDatabaseException();
+                          }
+                      }, ServiceLifetime.Scoped)
+
+                    //Build
+                    .BuildServiceProvider();
+
+                using (var scope = serviceProvider.CreateScope())
                 {
                     var appRunner = scope.ServiceProvider.GetRequiredService<AppRunner>();
-                    await appRunner.Run(int.Parse(numberOfTasksToBeGenerated));
+                    await appRunner.Run(numberOfTasksToBeGenerated, numberOfTasksToBeExecutedAtATime);
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Erro: {ex.Message} - {ex.StackTrace}");
-                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro: {ex.Message} - {ex.StackTrace}");
             }
         }
 
@@ -73,4 +84,5 @@ namespace TaskProcessor.Presentation
         }
     }
 }
+
 

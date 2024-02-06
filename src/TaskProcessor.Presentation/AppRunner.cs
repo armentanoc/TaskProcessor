@@ -17,18 +17,16 @@ namespace TaskProcessor.Presentation
             _taskExecutionService = taskExecutionService;
         }
 
-        public async Task Run(int numberOfTasks)
+        public async Task Run(int numberOfTasksToBeGenerated, int numberOfTasksToBeExecutedAtATime)
         {
-            DefaultData.TryInserting(numberOfTasks, _subTaskService, _taskService);
+            DefaultData.TryInserting(numberOfTasksToBeGenerated, _subTaskService, _taskService);
 
             //DisplayData<SubTaskEntity>.Display(() => _subTaskService.GetAllSubTasks());
             //DisplayData<TaskEntity>.Display(() => _taskService.GetAllTasks());
 
             try
             {
-                int topTasksCount = 2;
-
-                var executeTasks = _taskExecutionService.ExecuteTopTasksWithSubTasksAsync(topTasksCount);
+                var executeTasks = _taskExecutionService.ExecuteTopTasksWithSubTasksAsync(numberOfTasksToBeExecutedAtATime);
                 var displayTask = DisplayData<TaskEntity>.DisplayAsync(() => _taskService.GetAllTasksAsync());
 
                 await Task.WhenAll(executeTasks, displayTask);
