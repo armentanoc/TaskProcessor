@@ -17,9 +17,9 @@ namespace TaskProcessor.Presentation
             _taskExecutionService = taskExecutionService;
         }
 
-        public async Task Run()
+        public async Task Run(int numberOfTasks)
         {
-            DefaultData.TryInserting(_subTaskService, _taskService);
+            DefaultData.TryInserting(numberOfTasks, _subTaskService, _taskService);
 
             //DisplayData<SubTaskEntity>.Display(() => _subTaskService.GetAllSubTasks());
             //DisplayData<TaskEntity>.Display(() => _taskService.GetAllTasks());
@@ -39,10 +39,6 @@ namespace TaskProcessor.Presentation
             {
                 Console.WriteLine(ex.Message, ex.StackTrace);
             }
-
-            //Create.Customer(_subTaskService);
-
-            //Console.WriteLine("\nWorks fine. Press any key to exit...");
         }
     }
 }

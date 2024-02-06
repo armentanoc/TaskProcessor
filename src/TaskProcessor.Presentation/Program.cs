@@ -20,6 +20,9 @@ namespace TaskProcessor.Presentation
             var connectionString = databaseSettings["ConnectionString"];
             var provider = databaseSettings["Provider"];
 
+            var taskSettings = configuration.GetSection("TaskSettings");
+            var numberOfTasksToBeGenerated = taskSettings["NumberOfTasks"];    
+
             var serviceProvider = new ServiceCollection()
 
                 //General
@@ -50,8 +53,15 @@ namespace TaskProcessor.Presentation
 
             using (var scope = serviceProvider.CreateScope())
             {
-                var appRunner = scope.ServiceProvider.GetRequiredService<AppRunner>();
-                await appRunner.Run();
+                try
+                {
+                    var appRunner = scope.ServiceProvider.GetRequiredService<AppRunner>();
+                    await appRunner.Run(int.Parse(numberOfTasksToBeGenerated));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Erro: {ex.Message} - {ex.StackTrace}");
+                }
             }
         }
 

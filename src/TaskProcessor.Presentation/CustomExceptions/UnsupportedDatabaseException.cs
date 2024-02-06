@@ -9,7 +9,6 @@ namespace TaskProcessor.Presentation.CustomExceptions
         {
             
         }
-
         public UnsupportedDatabaseException(string? message) : base(message)
         {
         }

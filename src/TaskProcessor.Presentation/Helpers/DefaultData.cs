@@ -5,29 +5,29 @@ namespace TaskProcessor.Presentation.Helpers
 {
     internal class DefaultData
     {
-        internal static void TryInserting(SubTaskService subTaskService, TaskService taskService)
+        internal static void TryInserting(int numberOfTasks, SubTaskService subTaskService, TaskService taskService)
         {
             try
             {
                 if (!subTaskService.GetAllSubTasks().Any() && !taskService.GetAllTasks().Any())
-                    InsertDefaultData(subTaskService, taskService);
+                {
+                    InsertDefaultTasks(numberOfTasks, subTaskService, taskService);
+                    Console.WriteLine("Default data inserted.");
+                }
                 else
+                {
                     Console.WriteLine("TaskEntity and SubTaskEntity already exist. No changes made.");
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error inserting: " + ex.Message, ex.StackTrace);
-            }
+            } 
         }
 
-        private static void InsertDefaultData(SubTaskService subTaskService, TaskService taskService)
+        private static void InsertDefaultTasks(int numberOfTasks, SubTaskService subTaskService, TaskService taskService)
         {
-            InsertDefaultTasks(subTaskService, taskService);
-        }
-
-        private static void InsertDefaultTasks(SubTaskService subTaskService, TaskService taskService)
-        {
-            for (int i = 0; i < 5; i++) //transformar em configuração
+            for (int i = 0; i < numberOfTasks; i++) 
             {
                 taskService.CreateTask(subTaskService);
             }
