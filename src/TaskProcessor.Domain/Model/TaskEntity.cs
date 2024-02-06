@@ -1,4 +1,5 @@
-﻿using TaskProcessor.Domain.Interfaces;
+﻿
+using TaskProcessor.Domain.Interfaces;
 
 namespace TaskProcessor.Domain.Model
 {
@@ -10,6 +11,7 @@ namespace TaskProcessor.Domain.Model
         public int TotalSubTasks { get; set; }
         public int CompletedSubTasks { get; set; }
         public List<SubTaskEntity> SubTasks { get; set; }
+      
         public TaskEntity()
         {
             Status = TaskStatusEnum.Created;
@@ -24,8 +26,8 @@ namespace TaskProcessor.Domain.Model
         }
         private int GetRandomTotalSubTasks()
         {
-            return random.Next(10, 101);//professor quer
-            //return random.Next(5, 11);//meu teste
+            //return random.Next(10, 101);//professor quer
+            return random.Next(5, 11);//meu teste
         }
 
         private TaskPriorityEnum GetRandomTaskPriority()
@@ -48,6 +50,21 @@ namespace TaskProcessor.Domain.Model
                    $"\nTotal Duration (seconds): {totalDurationSeconds}" +
                    $"\nTotal Elapsed Time (seconds): {totalElapsedTimeSeconds}" +
                    $"\n\n{subTasksString}";
+        }
+
+        public void IncreaseCompletedSubTasks()
+        {
+            CompletedSubTasks++;
+        }
+
+        public void SetStatusToComplete()
+        {
+            Status = TaskStatusEnum.Completed;
+        }
+
+        public void SetStatusToInProgress()
+        {
+            Status = TaskStatusEnum.InProgress;
         }
     }
 }

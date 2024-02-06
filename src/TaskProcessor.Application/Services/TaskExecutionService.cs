@@ -1,4 +1,4 @@
-﻿
+﻿using Microsoft.Extensions.Logging;
 using TaskProcessor.Application.Services;
 
 namespace TaskProcessor.Domain.Model
@@ -9,13 +9,17 @@ namespace TaskProcessor.Domain.Model
         private readonly SubTaskService _subtaskService;
         private readonly object _taskLockObject = new object();
         private readonly object _subtaskLockObject = new object();
+        private readonly object _logLockObject = new object();
+        private readonly string logFilePath = "log_task_execution_service.txt";
+        //private readonly ILogger<TaskExecutionService> _logger;
 
-        public TaskExecutionService(TaskService taskService, SubTaskService subTaskService)
+        public TaskExecutionService(TaskService taskService, SubTaskService subTaskService, ILogger<TaskExecutionService> logger)
         {
-            _taskService = taskService;
-            _subtaskService = subTaskService;
+            _taskService = taskService ?? throw new ArgumentNullException(nameof(taskService));
+            _subtaskService = subTaskService ?? throw new ArgumentNullException(nameof(subTaskService));
+            //_logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            File.WriteAllText(logFilePath, string.Empty);
         }
-
         public async Task ExecuteTopTasksWithSubTasksAsync(int topTasksCount)
         {
             var tasksByPriority = GetTopTasksByPriority(topTasksCount);
@@ -25,71 +29,65 @@ namespace TaskProcessor.Domain.Model
 
         private async Task ExecuteTaskAsync(TaskEntity task)
         {
-            if (!(task.Status == TaskStatusEnum.InProgress))
+            if (task.Status != TaskStatusEnum.InProgress)
             {
-                //ServiceHelper.Log($"\nStarting Task: {TaskService.GetTaskInformation(task)}");
-                //logar essa informação
-                AlterStatusToInProgress(_taskLockObject, _taskService, task);
-            }
-            else
-            {
-                //ServiceHelper.LogWithColor(ConsoleColor.Magenta, $"\nRestarting Task at {(task.CompletedSubTasks) / (task.TotalSubTasks)}: {TaskService.GetTaskInformation(task)}");
+                LogInformation($"\nStarting Task: {TaskService.GetTaskInformation(task)}");
+                AlterStatusToInProgress(task);
             }
 
             var subTaskExecutionTasks = GetSubTasks(task)
-                .Select(subTask => ExecuteSubTaskAsync(subTask, task))
-                .ToList();
+                .Select(subTask => ExecuteSubTaskAsync(subTask, task));
 
             await Task.WhenAll(subTaskExecutionTasks).ConfigureAwait(false);
+        }
+
+        private async Task ExecuteSubTaskAsync(SubTaskEntity subTask, TaskEntity parentTask)
+        {
+            LogInformation($"\nStarting SubTask: {ServiceHelper.GetSubTaskInformation(subTask)}");
+            AlterStatusToInProgress(subTask);
+
+            while (!ServiceHelper.IsCompleted(subTask))
+            {
+                TryUpdatingElapsedTime(subTask, parentTask);
+                TryCompletingMainTask(subTask, parentTask);
+
+                if (!ServiceHelper.IsCompleted(subTask))
+                {
+                    LogInformation($"\nSubTask Updated: {ServiceHelper.GetSubTaskInformation(subTask)}");
+                    await Task.Delay(1000).ConfigureAwait(false);
+                }
+            }
+
+            LogInformation($"\nSubTask Completed: {ServiceHelper.GetSubTaskInformation(subTask)}");
+            LogInformation($"Task Progress: {parentTask.CompletedSubTasks}/{parentTask.TotalSubTasks}");
         }
 
         private IEnumerable<SubTaskEntity> GetSubTasks(TaskEntity task)
         {
             return task.SubTasks
-            .Where(subTask => !ServiceHelper.GetExcludedStatuses().Contains(subTask.Status))
-            .OrderByDescending(subTask => subTask.ElapsedTime);
-        }
-
-        private string GetDateTime()
-        {
-            return $"At {DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff")}";
-        }
-
-        private async Task ExecuteSubTaskAsync(SubTaskEntity subTask, TaskEntity parentTask)
-        {
-            //ServiceHelper.Log($"\nStarting SubTask: {GetSubTaskInformation(subTask)}");
-            //logar essa informação
-            AlterStatusToInProgress(_subtaskLockObject, _subtaskService, subTask);
-
-            while (true)
-            {
-                TryUpdatingElapsedTime(subTask, parentTask);
-                TryCompletingMainTask(subTask, parentTask);
-                if (!ServiceHelper.IsCompleted(subTask))
-                    //ServiceHelper.LogWithColor(ConsoleColor.Cyan, $"\nSubTask Updated: {GetSubTaskInformation(subTask)}");
-                    await Task.Delay(1000);
-                //colocar essa informação em log apenas
-                else
-                    break;
-            }
+                .Where(subTask => !ServiceHelper.GetExcludedStatuses().Contains(subTask.Status))
+                .OrderByDescending(subTask => subTask.ElapsedTime);
         }
 
         private void TryUpdatingElapsedTime(SubTaskEntity subTask, TaskEntity parentTask)
         {
-            lock (_subtaskLockObject)
-            {
-                subTask.UpdateElapsedTime();
-                _subtaskService.Update(subTask);
+            subTask.UpdateElapsedTime();
 
-                if (subTask.ElapsedTime >= subTask.Duration)
-                {
-                    subTask.Status = TaskStatusEnum.Completed;
-                    parentTask.CompletedSubTasks++;
-                    //ServiceHelper.LogWithColor(ConsoleColor.Green, $"\nSubTask Completed: {GetSubTaskInformation(subTask)}");
-                    //logar essa informação
-                    //ServiceHelper.LogProgress(parentTask);
-                    //logar essa informação
-                }
+            if (subTask.ElapsedTime >= subTask.Duration)
+            {
+                subTask.MakeSureElapsedTimeMatchesDuration();
+                subTask.SetStatusToComplete();
+                UpdateSubTaskInDatabase(subTask);
+                LogInformation($"\nSubTask Completed: {ServiceHelper.GetSubTaskInformation(subTask)}");
+
+                parentTask.IncreaseCompletedSubTasks();
+                UpdateTaskInDatabase(parentTask);
+
+                LogInformation($"Task Progress: {parentTask.CompletedSubTasks}/{parentTask.TotalSubTasks}");
+            }
+            else
+            {
+                UpdateSubTaskInDatabase(subTask);
             }
         }
 
@@ -97,26 +95,24 @@ namespace TaskProcessor.Domain.Model
         {
             if (!ServiceHelper.IsCompleted(parentTask))
             {
-                if (parentTask.CompletedSubTasks == parentTask.TotalSubTasks)
+                if (parentTask.CompletedSubTasks >= parentTask.TotalSubTasks)
                 {
-                    parentTask.Status = TaskStatusEnum.Completed;
-                    lock (_taskLockObject)
-                    {
-                        _taskService.Update(parentTask);
-                        //ServiceHelper.LogWithColor(ConsoleColor.Green, $"\nTask Completed: {TaskService.GetTaskInformation(parentTask)}");
-                        //logar essa informação
-                    }
+                    parentTask.SetStatusToComplete();
+                    UpdateTaskInDatabase(parentTask);
                 }
             }
         }
 
-        private object GetSubTaskInformation(SubTaskEntity subTask)
+        internal void AlterStatusToInProgress(TaskEntity task)
         {
-            return
-                $" \nTaskId: {subTask.TaskId}" +
-                $" SubTaskId: {subTask.Id} {GetDateTime()}" +
-                $" Duration: {subTask.Duration}" +
-                $" ElapsedTime: {subTask.ElapsedTime}";
+            task.SetStatusToInProgress();
+            UpdateTaskInDatabase(task);
+        }
+
+        internal void AlterStatusToInProgress(SubTaskEntity subTask)
+        {
+            subTask.SetStatusToInProgess();
+            UpdateSubTaskInDatabase(subTask);
         }
 
         private IEnumerable<TaskEntity> GetTopTasksByPriority(int topTasksCount)
@@ -126,18 +122,32 @@ namespace TaskProcessor.Domain.Model
                 .Take(topTasksCount)
                 .ToList();
         }
-        internal static void AlterStatusToInProgress(object lockObject, TaskService taskService, TaskEntity task)
+
+        private void UpdateSubTaskInDatabase(SubTaskEntity subTask)
         {
-            task.Status = TaskStatusEnum.InProgress;
-            lock (lockObject)
-                taskService.Update(task);
+            lock (_subtaskLockObject)
+                _subtaskService.Update(subTask);
         }
 
-        internal static void AlterStatusToInProgress(object lockObject, SubTaskService subTaskService, SubTaskEntity task)
+        private void UpdateTaskInDatabase(TaskEntity task)
         {
-            task.Status = TaskStatusEnum.InProgress;
-            lock (lockObject)
-                subTaskService.Update(task);
+            lock (_taskLockObject)
+                _taskService.Update(task);
+        }
+
+        private void LogInformation(string message)
+        {
+            lock (_logLockObject)
+            {
+                using (StreamWriter sw = File.AppendText(logFilePath))
+                {
+                    sw.WriteLine(
+                        $"{ServiceHelper.GetDateTime()}" +
+                        $"{message}" +
+                        $"\n\n------------------------------------------------------------------------\n"
+                    );
+                }
+            }
         }
     }
 }

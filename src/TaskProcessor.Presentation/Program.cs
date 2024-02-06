@@ -7,6 +7,7 @@ using TaskProcessor.Domain.Interfaces;
 using TaskProcessor.Domain.Model;
 using Microsoft.Extensions.Configuration;
 using TaskProcessor.Presentation.CustomExceptions;
+using Serilog;
 
 namespace TaskProcessor.Presentation
 {
@@ -20,7 +21,18 @@ namespace TaskProcessor.Presentation
             var connectionString = databaseSettings["ConnectionString"];
             var provider = databaseSettings["Provider"];
 
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()//remove after debug
+                .WriteTo.File("log.txt", rollingInterval: RollingInterval.Day)
+                .CreateLogger();
+
             var serviceProvider = new ServiceCollection()
+
+                // Add Serilog
+                .AddLogging(builder =>
+                {
+                    builder.AddSerilog();
+                })
 
                 //General
                 .AddScoped(typeof(IRepository<>), typeof(EFRepository<>))

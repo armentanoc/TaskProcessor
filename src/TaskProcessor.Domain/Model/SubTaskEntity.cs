@@ -7,17 +7,21 @@ namespace TaskProcessor.Domain.Model
     {
         private readonly Random random = new Random();
         public TaskStatusEnum Status { get; set; }
-        public int TaskId { get; set; }
+        public int TaskEntityId { get; set; }
         public TimeSpan Duration { get; private set; }
         public TimeSpan ElapsedTime { get; private set; }
         private DateTime StartTime;
 
+        public SubTaskEntity()
+        {
+            // Initialize properties, including navigation properties
+        }
         public SubTaskEntity(int taskId)
         {
             Status = TaskStatusEnum.Created;
             Duration = GetRandomDuration();
             ElapsedTime = TimeSpan.Zero;
-            TaskId = taskId;
+            TaskEntityId = taskId;
         }
 
         private TimeSpan GetRandomDuration()
@@ -30,12 +34,6 @@ namespace TaskProcessor.Domain.Model
         public void UpdateElapsedTime()
         {
             ElapsedTime += TimeSpan.FromSeconds(1);
-
-            if (ElapsedTime >= Duration)
-            {
-                ElapsedTime = Duration;
-                Status = TaskStatusEnum.Completed;
-            }
         }
 
         public override string ToString()
@@ -46,10 +44,25 @@ namespace TaskProcessor.Domain.Model
 
             return $"\nSubTask Id => {Id}, " +
                    $"SubTaskStatus => {Status}, " +
-                   $"TaskEntity Id => {TaskId}, " +
+                   $"TaskEntity Id => {TaskEntityId}, " +
                    $"StartTime => {startTimeString}, " +
                    $"Duration (seconds) => {Duration.TotalSeconds}, " +
                    $"ElapsedTime (seconds) => {ElapsedTime.TotalSeconds}";
+        }
+
+        public void MakeSureElapsedTimeMatchesDuration()
+        {
+            ElapsedTime = Duration;
+        }
+
+        public void SetStatusToComplete()
+        {
+            Status = TaskStatusEnum.Completed;
+        }
+
+        public void SetStatusToInProgess()
+        {
+            Status = TaskStatusEnum.InProgress;
         }
     }
 }

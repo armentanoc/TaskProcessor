@@ -2,47 +2,45 @@
 using TaskProcessor.Domain.Model;
 using TaskProcessor.Presentation.Helpers;
 
-namespace TaskProcessor.Presentation
+public class AppRunner
 {
-    public class AppRunner
+    private readonly SubTaskService _subTaskService;
+    private readonly TaskService _taskService;
+    private readonly TaskExecutionService _taskExecutionService;
+    private CancellationTokenSource _cancellationTokenSource;
+
+    public AppRunner(SubTaskService subTaskService, TaskService taskService, TaskExecutionService taskExecutionService)
     {
-        private readonly SubTaskService _subTaskService;
-        private readonly TaskService _taskService;
-        private readonly TaskExecutionService _taskExecutionService;
+        _subTaskService = subTaskService;
+        _taskService = taskService;
+        _taskExecutionService = taskExecutionService;
+    }
 
-        public AppRunner(SubTaskService subTaskService, TaskService taskService, TaskExecutionService taskExecutionService)
+    public async Task Run()
+    {
+        DefaultData.TryInserting(_subTaskService, _taskService);
+
+        try
         {
-            _subTaskService = subTaskService;
-            _taskService = taskService;
-            _taskExecutionService = taskExecutionService;
+            int concurrentTasksCount = 2;
+
+            _cancellationTokenSource = new CancellationTokenSource();
+
+            Task displayTask = _taskService.DisplayInformationAboutAllTasksAsync();
+            Task executeTask = _taskExecutionService.ExecuteTopTasksWithSubTasksAsync(concurrentTasksCount, _cancellationTokenSource.Token);
+
+            await Task.WhenAll(displayTask, executeTask);
+
+            Console.ReadLine();
         }
-
-        public async Task Run()
+        catch (Exception ex)
         {
-            DefaultData.TryInserting(_subTaskService, _taskService);
-
-            //DisplayData<SubTaskEntity>.Display(() => _subTaskService.GetAllSubTasks());
-            //DisplayData<TaskEntity>.Display(() => _taskService.GetAllTasks());
-            //DisplayData<TaskEntity>.Display(() => _taskService.GetAllTasksOrderedByPriority());
-            try
-            {
-                int concurrentTasksCount = 2;
-
-                Task displayTask = _taskService.DisplayInformationAboutAllTasksAsync();
-                Task executeTask = _taskExecutionService.ExecuteTopTasksWithSubTasksAsync(concurrentTasksCount);
-
-                await Task.WhenAll(displayTask, executeTask);
-
-                Console.ReadLine();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message, ex.StackTrace);
-            }
-
-            //Create.Customer(_subTaskService);
-
-            //Console.WriteLine("\nWorks fine. Press any key to exit...");
+            Console.WriteLine(ex.Message, ex.StackTrace);
+        }
+        finally
+        {
+            _cancellationTokenSource?.Cancel();
+            _cancellationTokenSource?.Dispose();
         }
     }
 }

@@ -70,5 +70,21 @@ namespace TaskProcessor.Application.Services
         {
             LogWithColor(ConsoleColor.Red, $"Erro: {ex.Message} - {ex.StackTrace}");
         }
+
+        public static string GetDateTime()
+        {
+            return $"At {DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff")}";
+        }
+
+        internal static string GetSubTaskInformation(SubTaskEntity subTask)
+        {
+            return
+                $" \nTaskId: {subTask.TaskEntityId}" +
+                $" SubTaskId: {subTask.Id} {ServiceHelper.GetDateTime()}" +
+                $" Duration: {subTask.Duration}" +
+                $" ElapsedTime: {subTask.ElapsedTime}";
+        }
+
+
     }
 }
