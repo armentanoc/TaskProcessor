@@ -1,4 +1,6 @@
-﻿namespace TaskProcessor.Domain.Interfaces
+﻿using TaskProcessor.Domain.Model;
+
+namespace TaskProcessor.Domain.Interfaces
 {
     public interface IRepository<T>
     {
@@ -8,5 +10,6 @@
         void Delete(int id);
 
         IEnumerable<T> GetAll();
+        Task<IEnumerable<T>> GetAllAsync();
     }
 }

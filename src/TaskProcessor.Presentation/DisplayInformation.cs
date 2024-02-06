@@ -4,13 +4,13 @@ using TaskProcessor.Presentation.Helpers;
 
 namespace TaskProcessor.Presentation
 {
-    public class AppRunner
+    public class DisplayInformation
     {
         private readonly SubTaskService _subTaskService;
         private readonly TaskService _taskService;
         private readonly TaskExecutionService _taskExecutionService;
 
-        public AppRunner(SubTaskService subTaskService, TaskService taskService, TaskExecutionService taskExecutionService)
+        public DisplayInformation(SubTaskService subTaskService, TaskService taskService, TaskExecutionService taskExecutionService)
         {
             _subTaskService = subTaskService;
             _taskService = taskService;
@@ -21,28 +21,15 @@ namespace TaskProcessor.Presentation
         {
             DefaultData.TryInserting(_subTaskService, _taskService);
 
-            //DisplayData<SubTaskEntity>.Display(() => _subTaskService.GetAllSubTasks());
-            //DisplayData<TaskEntity>.Display(() => _taskService.GetAllTasks());
-
             try
             {
-                int topTasksCount = 2;
-
-                var executeTasks = _taskExecutionService.ExecuteTopTasksWithSubTasksAsync(topTasksCount);
-                var displayTask = DisplayData<TaskEntity>.DisplayAsync(() => _taskService.GetAllTasksAsync());
-
-                await Task.WhenAll(executeTasks, displayTask);
-
+                await DisplayData<TaskEntity>.DisplayAsync(() => _taskService.GetAllTasksAsync());
                 Console.ReadLine();
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message, ex.StackTrace);
             }
-
-            //Create.Customer(_subTaskService);
-
-            //Console.WriteLine("\nWorks fine. Press any key to exit...");
         }
     }
 }

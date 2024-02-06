@@ -39,16 +39,11 @@ namespace TaskProcessor.Presentation
                 //AppRunner
                 .AddScoped<AppRunner>()
 
-                //DbContext
-                .AddDbContext<AppDbContext>(options =>
-                {
-                    if (provider.Equals("sqlite", StringComparison.OrdinalIgnoreCase))
-                        options.UseSqlite(connectionString);
-                    else if (provider.Equals("sqlserver", StringComparison.OrdinalIgnoreCase))
-                        options.UseSqlServer(connectionString);
-                    else
-                        throw new UnsupportedDatabaseException();
-                }, ServiceLifetime.Scoped)
+                  //DbContext
+                  .AddDbContext<AppDbContext>(options =>
+                  {
+                      options.UseInMemoryDatabase("MemoryDatabase");
+                  }, ServiceLifetime.Scoped)
 
                 //Build
                 .BuildServiceProvider();
@@ -62,9 +57,9 @@ namespace TaskProcessor.Presentation
 
         private static IConfiguration BuildConfiguration()
         {
-           return new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .Build();
+            return new ConfigurationBuilder()
+                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                 .Build();
         }
     }
 }

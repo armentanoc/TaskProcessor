@@ -1,4 +1,6 @@
-﻿using TaskProcessor.Domain.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using TaskProcessor.Domain.Interfaces;
+using TaskProcessor.Domain.Model;
 using TaskProcessor.Infra.Context;
 
 public class EFRepository<T> : IRepository<T> where T : class
@@ -40,5 +42,10 @@ public class EFRepository<T> : IRepository<T> where T : class
     public IEnumerable<T> GetAll()
     {
         return _context.Set<T>().ToList();
+    }
+
+    public async Task<IEnumerable<T>> GetAllAsync()
+    {
+        return await _context.Set<T>().ToListAsync();
     }
 }

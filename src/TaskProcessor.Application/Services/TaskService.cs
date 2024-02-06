@@ -17,7 +17,11 @@ namespace TaskProcessor.Application.Services
         public IEnumerable<TaskEntity> GetAllTasks()
         {
             return _taskEntityRepository.GetAll();
+        }
 
+        public async Task<IEnumerable<TaskEntity>> GetAllTasksAsync()
+        {
+            return await _taskEntityRepository.GetAllAsync();
         }
 
         public IEnumerable<TaskEntity> GetAllTasksByPriorityAndNumberOfSubTasks()

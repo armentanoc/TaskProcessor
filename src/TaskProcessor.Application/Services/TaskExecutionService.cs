@@ -17,21 +17,44 @@ namespace TaskProcessor.Domain.Model
 
         public async Task ExecuteTopTasksWithSubTasksAsync(int topTasksCount)
         {
-            var tasksByPriority = GetTopTasksByPriority(topTasksCount);
-            var executionTasks = tasksByPriority.Select(task => Task.Run(() => ExecuteTaskAsync(task))).ToList();
-            await Task.WhenAll(executionTasks);
+            while (true)
+            {
+                var tasksByPriority = GetTopTasksByPriority(topTasksCount);
+                var executionTasks = tasksByPriority.Select(task => Task.Run(() => ExecuteTaskAsync(task))).ToList();
+                await Task.WhenAll(executionTasks);
+                await Task.Delay(TimeSpan.FromSeconds(1));
+
+                if (NoMoreTasksToProcess()) 
+                {
+                    break;
+                }
+            }
         }
+
+        private bool NoMoreTasksToProcess()
+        {
+            var allTasks = _taskService.GetAllTasks();
+            var pendingTasks = allTasks.Any(task => (int) task.Status <= 3);
+            return !pendingTasks;
+        }
+
         private async Task ExecuteTaskAsync(TaskEntity task)
         {
             Log($"\nExecuting Task: {GetTaskInformation(task)}");
-            var subTaskExecutionTasks = task.SubTasks.Select(subTask => Task.Run(() => ExecuteSubTaskAsync(subTask, task))).ToList();
+
+            var subTaskExecutionTasks = 
+                task.SubTasks
+                .Select(subTask => Task.Run(() => ExecuteSubTaskAsync(subTask, task)))
+                .ToList()
+                .Where(subTask => (int)subTask.Status <= 3);
+
             await Task.WhenAll(subTaskExecutionTasks);
-            Log($"Task Completed: {GetTaskInformation(task)}");
+            Log($"[COMPLETED] Task Completed: {GetTaskInformation(task)}");
         }
 
         private string GetTaskInformation(TaskEntity task)
         {
-            return $"Id {task.Id} - Priority {task.Priority} \nSubtasks: {string.Join(", ", task.SubTasks.Select(subTask => $"SubTask Id: {subTask.Id}, Duration: {subTask.Duration.TotalSeconds}s"))} {GetDateTime()}";
+            return $"[INFO] Id {task.Id} - Priority {task.Priority} \nSubtasks: {string.Join(", ", task.SubTasks.Select(subTask => $"SubTask Id: {subTask.Id}, Duration: {subTask.Duration.TotalSeconds}s"))} {GetDateTime()}";
         }
 
         private string GetDateTime()
@@ -48,11 +71,11 @@ namespace TaskProcessor.Domain.Model
             while (!IsCompleted(subTask))
             {
                 TryUpdatingElapsedTime(subTask);
-                Log($"\nSubTask Updated: {GetSubTaskInformation(subTask)}");
+                Log($"\n[UPDATE] SubTask Updated: {GetSubTaskInformation(subTask)}");
                 TryCompletingMainTask(subTask, parentTask);
             }
             Log($"Progress: {parentTask.CompletedSubTasks}/{parentTask.TotalSubTasks} subtasks completed for Task {parentTask.Id}");
-            Log($"\nSubTask Completed: {GetSubTaskInformation(subTask)}");
+            Log($"\n[COMPLETED] SubTask Completed: {GetSubTaskInformation(subTask)}");
         }
 
         private bool IsCompleted<T>(T entity)
@@ -89,22 +112,33 @@ namespace TaskProcessor.Domain.Model
         private object GetSubTaskInformation(SubTaskEntity subTask)
         {
             return 
-                $"{subTask.Id} {GetDateTime()}" +
+                $"[INFO] {subTask.Id} {GetDateTime()}" +
                 $" Duration: {subTask.Duration}" +
                 $" ElapsedTime: {subTask.ElapsedTime}";
-        }
-
-        private void Log(string message)
-        {
-            Console.WriteLine(message);
         }
 
         private IEnumerable<TaskEntity> GetTopTasksByPriority(int topTasksCount)
         {
             return _taskService
                 .GetAllTasksByPriorityAndNumberOfSubTasks()
+                .Where(task => (int)task.Status <= 3)
                 .Take(topTasksCount)
                 .ToList();
+        }
+
+        private object _fileLock = new object();
+
+        private void Log(string message)
+        {
+            string filePath = "log_task_execution_service.txt";
+
+            lock (_fileLock)
+            {
+                using (StreamWriter writer = new StreamWriter(filePath, true))
+                {
+                    writer.WriteLine(message);
+                }
+            }
         }
     }
 }
