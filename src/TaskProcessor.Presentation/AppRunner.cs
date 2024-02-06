@@ -26,7 +26,7 @@ namespace TaskProcessor.Presentation
                 while (true)
                 {
                     var executeTasks = _taskExecutionService.ExecuteTopTasksWithSubTasksAsync(numberOfTasksToBeExecutedAtATime);
-                    var displayTask = DisplayData<TaskEntity>.DisplayAsync(numberOfTasksToBeGenerated, () => _taskService.GetAllTasksAsync(), _taskService);
+                    var displayTask = ConsoleUI.DisplayAsync(numberOfTasksToBeGenerated, () => _taskService.GetAllTasksAsync(), _taskService);
                     await Task.WhenAll(executeTasks, displayTask);
 
                     Console.ReadLine();
