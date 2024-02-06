@@ -68,7 +68,7 @@ internal class ConsoleDisplay
                 Console.Write(new string(' ', Console.WindowWidth));
 
                 Console.SetCursorPosition(0, inputRow);
-                Console.WriteLine($"\n\n\nTask ({pausedTask.Id}) restarted. Press Enter to continue...");
+                Console.WriteLine($"\nTask ({pausedTask.Id}) restarted. Press Enter to continue...");
                 Console.ReadLine();
             }
             else
@@ -105,7 +105,7 @@ internal class ConsoleDisplay
                 Console.Write(new string(' ', Console.WindowWidth));
 
                 Console.SetCursorPosition(0, inputRow);
-                Console.WriteLine($"\n\n\nTask ({taskToPause.Id}) paused. Press Enter to continue...");
+                Console.WriteLine($"\nTask ({taskToPause.Id}) paused. Press Enter to continue...");
                 Console.ReadLine();
             }
             else

@@ -1,13 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
+using TaskProcessor.Presentation.CustomExceptions;
+using TaskProcessor.Presentation.UI;
 using TaskProcessor.Infra.Context;
 using TaskProcessor.Infra.Repositories;
 using TaskProcessor.Application.Services;
 using TaskProcessor.Domain.Interfaces;
 using TaskProcessor.Domain.Model;
-using Microsoft.Extensions.Configuration;
-using TaskProcessor.Presentation.CustomExceptions;
-using TaskProcessor.Presentation.UI;
 
 namespace TaskProcessor.Presentation
 {
