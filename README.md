@@ -1,43 +1,19 @@
-# DDDWithSQLite
+# TaskProcessor
 
-1. N„o È necess·rio login/autenticaÁ„o, j· abrimos o programa com o usu·rio logado
+- O programa √© um processador de tarefas que processa paralelamente determinadas tarefas utilizando a estrutura `Task` para nortear a execu√ß√£o de `TaskEntity`e suas `SubTaskEntity`; 
+- O programa foi desenvolvido com base na arquitetura DDD, com os seguintes projetos: 
 
-2. O programa È um processador de tarefas que processa paralelamente determinadas tarefas
-- CritÈrios
-	- Estabelecer critÈrios para quais tarefas executar primeiro
-	- Tarefas de alta prioridade devem ser processadas primeiro
-	- Deve ser possÌvel cancelar uma tarefa em execuÁ„o
-	- As tarefas devem ser armazenadas em um banco de dados (SQLite)
-- Subtarefas
-	- Cada tarefa pode ter subtarefas 
-- Tempo
-	- A sugest„o do professor È gerar tarefas com tempo aleatÛrio - elas devem ter tempo diferentes (ver o thresold)
-	- Devemos estabelecer um delay para simular o processamento de cada tarefa (Task.Delay) - ver tempo que o professor falou
-	- O armazenamento deve ser persistente e, fechando o programa, ao reiniciar o sistema deve reiniciar de onde parou
-- Forma de processamento
-	- As tarefas devem ser processadas em paralelo (Parallel.ForEach)
-	- As tarefas devem ser processadas de maneira assÌncrona (async/await)
-- Estados de tarefa
-	- As tarefas devem ter estados (criadas, agendadas, em execuÁ„o, concluÌdas, etc.) - ver nomenclatura certinha que o prof. passou 
-	- As tarefas devem ser armazenadas em um banco de dados (SQLite)
+1. TaskProcessor.Domain (sem depend√™ncias) -> √© uma ClassLib com classes de modelo (BaseEntity, SubTaskEntity, TaskEntity, TaskPriorityEnum e TaskStatusEnum) e interfaces que guiam a implementa√ß√£o dos reposit√≥rios geral e espec√≠ficos (IRepository, IRepositorySubTaskEntity, IRepositoryTaskEntity).
+2. TaskProcessor.Application (depende do Domain e da Infra) -> √© uma ClassLib com classes de servi√ßo (SubTaskService, TaskService, TaskExecutionService e uma classe com m√©todos de apoio chamada ServiceHelper)
+3. TaskProcessor.Infra (depende do Domain) -> √© uma ClassLib que tem um AppDbContext que herda do DbContext do EntityFrameworkCore, gerando os DbSet<TaskEntity> e DbSet<SubTaskEntity> e os reposit√≥rios propriamente dito, gen√©rico (EFRepository) e espec√≠ficos (EFRepositorySubTaskEntity, EFRepositoryTaskEntity)
+4. TaskProcessor.Presentation (depende de Application) -> realiza a configura√ß√£o do aplicativo lendo do arquivo appsettings.json com o IConfiguration, bem como a inje√ß√£o de depend√™ncia utilizando o IServiceProvider, aborda o build das configura√ß√µes, a cria√ß√£o de escopo para executar a aplica√ß√£o e a UI propriamente dita exibida em uma Aplica√ß√£o Console.
 
-3. O que o programa deve ter? 
-	- Usar Generics
-	- InjeÁ„o de dependÍncia
-	- Async/Await
-	- Parallel
-	- Readme
-
-4. A configuraÁ„o deve ser feita em um arquivo de configuraÁ„o
-	- A quantidade de tarefas dever· ser uma configuraÁ„o
-	- A quantidade que cada subtarefas pode ter deve ser uma configuraÁ„o
-	- O tipo de armazenamento (ex.: Sqlite) e o nome do database dever· ser uma configuraÁ„o 
-
-OrdenaÁ„o de tarefas: 
-
-public IEnumerable<TaskEntity> GetAllTasksByPriorityAndNumberOfSubTasks()
-        {
-                return _taskEntityRepository.GetAll()
-                .OrderBy(task => task.Priority)
-                .ThenBy(task => task.TotalSubTasks);
-        }
+- As TaskEntity s√£o aleatoriamentes marcadas com prioridade `High`, `Medium` ou `Low`, sendo executadas nessa ordem;
+- √â poss√≠vel pausar uma tarefa ainda n√£o executada, modificando seu status para `Paused`;
+- Enquanto as tarefas est√£o sendo executadas, √© poss√≠vel resumir o agendamento de uma tarefa, modificando seu status para `Reschedule`;
+- Foi utilizado Armazenamento em Mem√≥ria, mas a estrutura do programa est√° preparada para configura√ß√£o do armazenamento com banco de dados atrav√©s do Entity 
+- Foi estabelecido um delay aleat√≥rio para simular o processamento de cada tarefa (Task.Delay);
+- √â especificado no arquivo de configura√ß√£o (`appsettings.json`) a quantidade de tarefas a serem executadas ao mesmo tempo e a quantidade aleat√≥ria de tarefas a serem geradas;
+- Essas tarefas s√£o executadas paralelamente de maneira ass√≠ncrona (`async`/`await`, com a execu√ß√£o de cada uma das subtarefas e salvamento do progresso parcial; 
+- As tarefas t√™m estados (`Created`, `Scheduled`, `InProgress`, `Paused`, `Completed`, `Cancelled`);
+- O programa utiliza: Generics, Inje√ß√£o de depend√™ncia, Async/Await, Execu√ß√£o paralela (Task.WhenAll)
