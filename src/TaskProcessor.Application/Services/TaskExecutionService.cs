@@ -15,11 +15,11 @@ namespace TaskProcessor.Domain.Model
             _subtaskService = subTaskService;
         }
 
-        public async Task ExecuteTopTasksWithSubTasksAsync(int topTasksCount)
+        public async Task ExecuteTopTasksWithSubTasksAsync(int topTasksCount, int idOfTaskToPause = -1)
         {
             while (true)
             {
-                var tasksByPriority = GetTopTasksByPriority(topTasksCount);
+                var tasksByPriority = GetTopTasksByPriority(topTasksCount).Where(task => task.Id != idOfTaskToPause);
                 var executionTasks = tasksByPriority.Select(task => Task.Run(() => ExecuteTaskAsync(task))).ToList();
                 
                 await Task.WhenAll(executionTasks);
@@ -58,6 +58,11 @@ namespace TaskProcessor.Domain.Model
             ServiceHelper.LogStartSubTask(subTask);
             subTask.StartSubTask();
 
+            parentTask.Begin();
+            lock (_lockObject)
+            {
+                _taskService.Update(parentTask);
+            }
             while (!IsCompleted(subTask))
             {
                 TryUpdatingElapsedTime(subTask);

@@ -13,7 +13,6 @@ namespace TaskProcessor.Application.Services
             _taskEntityRepository = taskEntityRepository;
         }
 
-
         public IEnumerable<TaskEntity> GetAllTasks()
         {
             return _taskEntityRepository.GetAll();
@@ -72,6 +71,11 @@ namespace TaskProcessor.Application.Services
             {
                 Console.WriteLine(ex.Message, ex.StackTrace);
             }
-        }   
+        }
+
+        public TaskEntity GetTaskById(int id)
+        {
+            return _taskEntityRepository.GetById(id);
+        }
     }
 }

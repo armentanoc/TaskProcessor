@@ -20,6 +20,14 @@
         {
             return CompletedSubTasks == TotalSubTasks;
         }
+        public void Pause()
+        {
+            Status = TaskStatusEnum.Paused;
+        }
+        public void Begin()
+        {
+            Status = TaskStatusEnum.InProgress;
+        }
         private int GetRandomTotalSubTasks()
         {
             return random.Next(10, 101);
