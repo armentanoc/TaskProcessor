@@ -7,6 +7,7 @@ using TaskProcessor.Domain.Interfaces;
 using TaskProcessor.Domain.Model;
 using Microsoft.Extensions.Configuration;
 using TaskProcessor.Presentation.CustomExceptions;
+using TaskProcessor.Presentation.UI;
 
 namespace TaskProcessor.Presentation
 {
@@ -79,7 +80,7 @@ namespace TaskProcessor.Presentation
         private static IConfiguration BuildConfiguration()
         {
             return new ConfigurationBuilder()
-                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                 .AddJsonFile("Configuration/appsettings.json", optional: false, reloadOnChange: true)
                  .Build();
         }
     }

@@ -1,8 +1,7 @@
 ﻿using TaskProcessor.Application.Services;
-using TaskProcessor.Domain.Model;
 using TaskProcessor.Presentation.Helpers;
 
-namespace TaskProcessor.Presentation
+namespace TaskProcessor.Presentation.UI
 {
     public class AppRunner
     {
@@ -26,7 +25,7 @@ namespace TaskProcessor.Presentation
                 while (true)
                 {
                     var executeTasks = _taskExecutionService.ExecuteTopTasksWithSubTasksAsync(numberOfTasksToBeExecutedAtATime);
-                    var displayTask = ConsoleUI.DisplayAsync(numberOfTasksToBeGenerated, () => _taskService.GetAllTasksAsync(), _taskService);
+                    var displayTask = ConsoleDisplay.DisplayAsync(numberOfTasksToBeGenerated, () => _taskService.GetAllTasksAsync(), _taskService);
                     await Task.WhenAll(executeTasks, displayTask);
 
                     Console.ReadLine();

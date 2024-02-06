@@ -24,6 +24,10 @@
         {
             Status = TaskStatusEnum.Paused;
         }
+        public void Resume()
+        {
+            Status = TaskStatusEnum.Scheduled;
+        }
         public void Begin()
         {
             Status = TaskStatusEnum.InProgress;
