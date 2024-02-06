@@ -1,7 +1,6 @@
-﻿
-using TaskProcessor.Application.Services;
+﻿using TaskProcessor.Domain.Model;
 
-namespace TaskProcessor.Domain.Model
+namespace TaskProcessor.Application.Services
 {
     public class TaskExecutionService
     {
@@ -15,16 +14,16 @@ namespace TaskProcessor.Domain.Model
             _subtaskService = subTaskService;
         }
 
-        public async Task ExecuteTopTasksWithSubTasksAsync(int topTasksCount)
+        public async Task ExecuteTopTasksWithSubTasksAsync(int topTasksCount, int idOfTaskToPause = -1)
         {
             while (true)
             {
-                var tasksByPriority = GetTopTasksByPriority(topTasksCount);
+                var tasksByPriority = GetTopTasksByPriority(topTasksCount).Where(task => task.Id != idOfTaskToPause);
                 var executionTasks = tasksByPriority.Select(task => Task.Run(() => ExecuteTaskAsync(task))).ToList();
-                
+
                 await Task.WhenAll(executionTasks);
 
-                if (NoMoreTasksToProcess()) 
+                if (NoMoreTasksToProcess())
                 {
                     break;
                 }
@@ -34,7 +33,7 @@ namespace TaskProcessor.Domain.Model
         private bool NoMoreTasksToProcess()
         {
             var allTasks = _taskService.GetAllTasks();
-            var pendingTasks = allTasks.Any(task => (int) task.Status <= 3);
+            var pendingTasks = allTasks.Any(task => (int)task.Status <= 3);
             return !pendingTasks;
         }
 
@@ -42,7 +41,7 @@ namespace TaskProcessor.Domain.Model
         {
             ServiceHelper.LogStartTask(task);
 
-            var subTaskExecutionTasks = 
+            var subTaskExecutionTasks =
                 task.SubTasks
                 .Select(subTask => Task.Run(() => ExecuteSubTaskAsync(subTask, task)))
                 .ToList()
@@ -58,6 +57,11 @@ namespace TaskProcessor.Domain.Model
             ServiceHelper.LogStartSubTask(subTask);
             subTask.StartSubTask();
 
+            parentTask.Begin();
+            lock (_lockObject)
+            {
+                _taskService.Update(parentTask);
+            }
             while (!IsCompleted(subTask))
             {
                 TryUpdatingElapsedTime(subTask);

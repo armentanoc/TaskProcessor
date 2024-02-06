@@ -1,8 +1,7 @@
 ﻿using TaskProcessor.Application.Services;
-using TaskProcessor.Domain.Model;
 using TaskProcessor.Presentation.Helpers;
 
-namespace TaskProcessor.Presentation
+namespace TaskProcessor.Presentation.UI
 {
     public class AppRunner
     {
@@ -21,21 +20,20 @@ namespace TaskProcessor.Presentation
         {
             DefaultData.TryInserting(numberOfTasksToBeGenerated, _subTaskService, _taskService);
 
-            //DisplayData<SubTaskEntity>.Display(() => _subTaskService.GetAllSubTasks());
-            //DisplayData<TaskEntity>.Display(() => _taskService.GetAllTasks());
-
             try
             {
-                var executeTasks = _taskExecutionService.ExecuteTopTasksWithSubTasksAsync(numberOfTasksToBeExecutedAtATime);
-                var displayTask = DisplayData<TaskEntity>.DisplayAsync(() => _taskService.GetAllTasksAsync());
+                while (true)
+                {
+                    var executeTasks = _taskExecutionService.ExecuteTopTasksWithSubTasksAsync(numberOfTasksToBeExecutedAtATime);
+                    var displayTask = ConsoleDisplay.DisplayAsync(numberOfTasksToBeGenerated, () => _taskService.GetAllTasksAsync(), _taskService);
+                    await Task.WhenAll(executeTasks, displayTask);
 
-                await Task.WhenAll(executeTasks, displayTask);
-
-                Console.ReadLine();
+                    Console.ReadLine();
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message, ex.StackTrace);
+                Console.WriteLine($"Error: {ex.Message} - {ex.StackTrace}");
             }
         }
     }
