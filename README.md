@@ -2,6 +2,10 @@
 
 ## Visão Geral
 
+<div align="center" display="flex">
+<img src="https://github.com/armentanoc/TaskProcessor/assets/88147887/9f2c2134-2a20-424e-a00d-a751ed3e9dfc" height="500px">
+</div>
+
 Bem-vindo ao TaskProcessor, o seu processador de tarefas paralelo! 🤖 
 Este programa gerencia tarefas e subtarefas utilizando a poderosa estrutura `Task` seguindo a arquitetura DDD (Design Orientado a Domínio) e utilizando metodologias como `Generics`, `Injeção de Dependência`, `Async/Await`, `Task`, `Entity Framework`, `IConfiguration`, `IServiceProvider`, etc.
 Aqui está uma breve visão geral:
