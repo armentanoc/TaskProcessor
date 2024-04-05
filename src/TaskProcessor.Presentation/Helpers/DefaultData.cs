@@ -1,11 +1,12 @@
 ﻿
+using TaskProcessor.Application.Interfaces;
 using TaskProcessor.Application.Services;
 
 namespace TaskProcessor.Presentation.Helpers
 {
     internal class DefaultData
     {
-        internal static void TryInserting(int numberOfTasks, SubTaskService subTaskService, TaskService taskService)
+        internal static void TryInserting(int numberOfTasks, ISubTaskService subTaskService, ITaskService taskService)
         {
             try
             {
@@ -25,11 +26,11 @@ namespace TaskProcessor.Presentation.Helpers
             } 
         }
 
-        private static void InsertDefaultTasks(int numberOfTasks, SubTaskService subTaskService, TaskService taskService)
+        private static void InsertDefaultTasks(int numberOfTasks, ISubTaskService subTaskService, ITaskService taskService)
         {
             for (int i = 0; i < numberOfTasks; i++) 
             {
-                taskService.CreateTask(subTaskService);
+                taskService.CreateTask();
             }
         }
     }

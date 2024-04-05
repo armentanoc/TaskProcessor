@@ -1,16 +1,18 @@
 ﻿
-using TaskProcessor.Domain.Interfaces;
+using TaskProcessor.Application.Interfaces;
 using TaskProcessor.Domain.Model;
+using TaskProcessor.Infra.Interfaces;
 
 namespace TaskProcessor.Application.Services
 {
-    public class TaskService
+    public class TaskService : ITaskService
     {
-        private readonly IRepository<TaskEntity> _taskEntityRepository;
-
-        public TaskService(IRepository<TaskEntity> taskEntityRepository)
+        private readonly ITaskEntityRepository _taskEntityRepository;
+        private readonly ISubTaskService _subTaskService;
+        public TaskService(ITaskEntityRepository taskEntityRepository, ISubTaskService subTaskService)
         {
             _taskEntityRepository = taskEntityRepository;
+            _subTaskService = subTaskService;
         }
 
         public IEnumerable<TaskEntity> GetAllTasks()
@@ -31,13 +33,13 @@ namespace TaskProcessor.Application.Services
                 .ThenBy(task => task.TotalSubTasks);
         }
 
-        public void CreateTask(SubTaskService subTaskService)
+        public void CreateTask()
         {
             try
             {
                 var task = new TaskEntity();
                 _taskEntityRepository.Add(task);
-                CreateSubTasks(subTaskService, task);
+                CreateSubTasks(task);
             }
             catch (Exception ex)
             {
@@ -45,13 +47,13 @@ namespace TaskProcessor.Application.Services
             }
         }
 
-        private void CreateSubTasks(SubTaskService subTaskService, TaskEntity task)
+        public void CreateSubTasks(TaskEntity task)
         {
             try
             {
                 for (int i = 0; i < task.TotalSubTasks; i++)
                 {
-                    SubTaskEntity subTask = subTaskService.CreateSubTask(task.Id);
+                    SubTaskEntity subTask = _subTaskService.CreateSubTask(task.Id);
                     task.SubTasks.Add(subTask);
                 }
             }

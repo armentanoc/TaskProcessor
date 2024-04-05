@@ -1,14 +1,15 @@
-﻿using TaskProcessor.Domain.Model;
+﻿using TaskProcessor.Application.Interfaces;
+using TaskProcessor.Domain.Model;
 
 namespace TaskProcessor.Application.Services
 {
-    public class TaskExecutionService
+    public class TaskExecutionService : ITaskExecutionService
     {
-        private readonly TaskService _taskService;
-        private readonly SubTaskService _subtaskService;
+        private readonly ITaskService _taskService;
+        private readonly ISubTaskService _subtaskService;
         private readonly object _lockObject = new object();
 
-        public TaskExecutionService(TaskService taskService, SubTaskService subTaskService)
+        public TaskExecutionService(ITaskService taskService, ISubTaskService subTaskService)
         {
             _taskService = taskService;
             _subtaskService = subTaskService;
@@ -24,20 +25,18 @@ namespace TaskProcessor.Application.Services
                 await Task.WhenAll(executionTasks);
 
                 if (NoMoreTasksToProcess())
-                {
                     break;
-                }
             }
         }
 
-        private bool NoMoreTasksToProcess()
+        public bool NoMoreTasksToProcess()
         {
             var allTasks = _taskService.GetAllTasks();
             var pendingTasks = allTasks.Any(task => (int)task.Status <= 3);
             return !pendingTasks;
         }
 
-        private async Task ExecuteTaskAsync(TaskEntity task)
+        public async Task ExecuteTaskAsync(TaskEntity task)
         {
             ServiceHelper.LogStartTask(task);
 
@@ -52,16 +51,16 @@ namespace TaskProcessor.Application.Services
             ServiceHelper.LogCompleteTask(task);
         }
 
-        private async Task ExecuteSubTaskAsync(SubTaskEntity subTask, TaskEntity parentTask)
+        public async Task ExecuteSubTaskAsync(SubTaskEntity subTask, TaskEntity parentTask)
         {
             ServiceHelper.LogStartSubTask(subTask);
             subTask.StartSubTask();
 
             parentTask.Begin();
+
             lock (_lockObject)
-            {
                 _taskService.Update(parentTask);
-            }
+
             while (!IsCompleted(subTask))
             {
                 TryUpdatingElapsedTime(subTask);
@@ -71,12 +70,12 @@ namespace TaskProcessor.Application.Services
             ServiceHelper.LogCompleteSubTask(subTask);
         }
 
-        private bool IsCompleted<T>(T entity)
+        public bool IsCompleted<T>(T entity)
         {
             return entity != null && entity.GetType().GetProperty("Status")?.GetValue(entity) is TaskStatusEnum.Completed;
         }
 
-        private void TryUpdatingElapsedTime(SubTaskEntity subTask)
+        public void TryUpdatingElapsedTime(SubTaskEntity subTask)
         {
             lock (_lockObject)
             {
@@ -86,7 +85,7 @@ namespace TaskProcessor.Application.Services
             }
         }
 
-        private void TryCompletingMainTask(SubTaskEntity subTask, TaskEntity parentTask)
+        public void TryCompletingMainTask(SubTaskEntity subTask, TaskEntity parentTask)
         {
             if (subTask.Status == TaskStatusEnum.Completed)
             {
@@ -95,15 +94,14 @@ namespace TaskProcessor.Application.Services
                 if (parentTask.CompletedSubTasks == parentTask.TotalSubTasks)
                 {
                     parentTask.Status = TaskStatusEnum.Completed;
+
                     lock (_lockObject)
-                    {
                         _taskService.Update(parentTask);
-                    }
                 }
             }
         }
 
-        private IEnumerable<TaskEntity> GetTopTasksByPriority(int topTasksCount)
+        public IEnumerable<TaskEntity> GetTopTasksByPriority(int topTasksCount)
         {
             return _taskService
                 .GetAllTasksByPriorityAndNumberOfSubTasks()

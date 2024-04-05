@@ -1,12 +1,13 @@
-﻿using TaskProcessor.Domain.Interfaces;
+﻿
 using TaskProcessor.Domain.Model;
 using TaskProcessor.Infra.Context;
+using TaskProcessor.Infra.Interfaces;
 
 namespace TaskProcessor.Infra.Repositories
 {
-    public class EFRepositorySubTaskEntity : EFRepository<SubTaskEntity>, IRepositorySubTaskEntity<SubTaskEntity>
+    public class SubTaskEntityRepository : Repository<SubTaskEntity>, ISubTaskEntityRepository
     {
-        public EFRepositorySubTaskEntity(AppDbContext context) : base(context)
+        public SubTaskEntityRepository(AppDbContext context) : base(context)
         {
             //required by EF
         }

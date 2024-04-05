@@ -1,13 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using TaskProcessor.Domain.Interfaces;
-using TaskProcessor.Domain.Model;
 using TaskProcessor.Infra.Context;
+using TaskProcessor.Infra.Interfaces;
 
-public class EFRepository<T> : IRepository<T> where T : class
+public class Repository<T> : IRepository<T> where T : class
 {
     private readonly AppDbContext _context;
 
-    public EFRepository(AppDbContext context)
+    public Repository(AppDbContext context)
     {
         _context = context;
     }

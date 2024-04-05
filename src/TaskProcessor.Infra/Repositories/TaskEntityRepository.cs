@@ -1,15 +1,17 @@
-﻿using TaskProcessor.Domain.Interfaces;
+﻿
 using TaskProcessor.Domain.Model;
 using TaskProcessor.Infra.Context;
+using TaskProcessor.Infra.Interfaces;
 
 namespace TaskProcessor.Infra.Repositories
 {
-    public class EFRepositoryTaskEntity : EFRepository<TaskEntity>, IRepositoryTaskEntity<TaskEntity>
+    public class TaskEntityRepository : Repository<TaskEntity>, ITaskEntityRepository
     {
-        public EFRepositoryTaskEntity(AppDbContext context) : base(context)
+        public TaskEntityRepository(AppDbContext context) : base(context)
         {
             //required by EF
         }
+
         public TaskStatusEnum GetStatusById(int id)
         {
             return GetStatusById(id);

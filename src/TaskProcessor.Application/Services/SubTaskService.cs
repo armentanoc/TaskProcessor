@@ -1,14 +1,15 @@
 ﻿
-using TaskProcessor.Domain.Interfaces;
+using TaskProcessor.Application.Interfaces;
 using TaskProcessor.Domain.Model;
+using TaskProcessor.Infra.Interfaces;
 
 namespace TaskProcessor.Application.Services
 {
-    public class SubTaskService 
+    public class SubTaskService : ISubTaskService
     {
-        private readonly IRepository<SubTaskEntity> _subTaskEntityRepository;
+        private readonly ISubTaskEntityRepository _subTaskEntityRepository;
 
-        public SubTaskService(IRepository<SubTaskEntity> taskEntityRepository)
+        public SubTaskService(ISubTaskEntityRepository taskEntityRepository)
         {
             _subTaskEntityRepository = taskEntityRepository;
         }
