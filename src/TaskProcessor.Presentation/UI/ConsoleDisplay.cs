@@ -1,11 +1,18 @@
-﻿using TaskProcessor.Application.Services;
+﻿using TaskProcessor.Application.Interfaces;
+using TaskProcessor.Application.Services;
 using TaskProcessor.Domain.Model;
 
 internal class ConsoleDisplay
 {
+    private readonly ITaskService taskService;
     private static int menuHeight;
 
-    public static async Task DisplayAsync(int totalTasks, Func<Task<IEnumerable<TaskEntity>>> value, TaskService taskService)
+    public ConsoleDisplay(ITaskService taskService)
+    {
+        this.taskService = taskService;
+    }
+
+    public async Task DisplayAsync(int totalTasks, Func<Task<IEnumerable<TaskEntity>>> value)
     {
         menuHeight = totalTasks * 3;
         var progressTask = DisplayData<TaskEntity>.DisplayProgress(value);
@@ -14,7 +21,7 @@ internal class ConsoleDisplay
         await Task.WhenAll(progressTask, menuTask);
     }
 
-    private static async Task DisplayMenu(TaskService taskService, Func<Task<IEnumerable<TaskEntity>>> value)
+    private async Task DisplayMenu(ITaskService taskService, Func<Task<IEnumerable<TaskEntity>>> value)
     {
         Console.Clear();
         while (true)
@@ -48,7 +55,7 @@ internal class ConsoleDisplay
         }
     }
 
-    private static async Task RestartPausedTaskOption(TaskService taskService, Func<Task<IEnumerable<TaskEntity>>> value)
+    private static async Task RestartPausedTaskOption(ITaskService taskService, Func<Task<IEnumerable<TaskEntity>>> value)
     {
         Console.Clear();
         Console.SetCursorPosition(0, menuHeight);
@@ -85,7 +92,7 @@ internal class ConsoleDisplay
         Console.Clear();
     }
 
-    private static async Task HandlePauseTaskOption(TaskService taskService, Func<Task<IEnumerable<TaskEntity>>> value)
+    private async Task HandlePauseTaskOption(ITaskService taskService, Func<Task<IEnumerable<TaskEntity>>> value)
     {
         Console.Clear();
         Console.SetCursorPosition(0, menuHeight);

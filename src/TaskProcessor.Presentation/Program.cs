@@ -7,8 +7,8 @@ using TaskProcessor.Presentation.UI;
 using TaskProcessor.Infra.Context;
 using TaskProcessor.Infra.Repositories;
 using TaskProcessor.Application.Services;
-using TaskProcessor.Domain.Interfaces;
-using TaskProcessor.Domain.Model;
+using TaskProcessor.Infra.Interfaces;
+using TaskProcessor.Application.Interfaces;
 
 namespace TaskProcessor.Presentation
 {
@@ -33,19 +33,16 @@ namespace TaskProcessor.Presentation
                 //ServiceProvider
                 var serviceProvider = new ServiceCollection()
 
-                    //General
-                    .AddScoped(typeof(IRepository<>), typeof(EFRepository<>))
-
                     //Tasks
-                    .AddScoped<IRepositoryTaskEntity<TaskEntity>, EFRepositoryTaskEntity>()
-                    .AddScoped<TaskService>()
+                    .AddScoped<ITaskEntityRepository, TaskEntityRepository>()
+                    .AddScoped<ITaskService, TaskService>()
 
                     //Subtasks
-                    .AddScoped<IRepositorySubTaskEntity<SubTaskEntity>, EFRepositorySubTaskEntity>()
-                    .AddScoped<SubTaskService>()
+                    .AddScoped<ISubTaskEntityRepository, SubTaskEntityRepository>()
+                    .AddScoped<ISubTaskService, SubTaskService>()
 
                     //Task Execution
-                    .AddScoped<TaskExecutionService>()
+                    .AddScoped<ITaskExecutionService, TaskExecutionService>()
 
                     //AppRunner
                     .AddScoped<AppRunner>()
