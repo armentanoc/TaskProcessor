@@ -1,5 +1,4 @@
 ﻿using TaskProcessor.Application.Interfaces;
-using TaskProcessor.Application.Services;
 using TaskProcessor.Domain.Model;
 
 internal class ConsoleDisplay
@@ -23,10 +22,10 @@ internal class ConsoleDisplay
 
     private async Task DisplayMenu(ITaskService taskService, Func<Task<IEnumerable<TaskEntity>>> value)
     {
-        Console.Clear();
         while (true)
         {
-            Console.SetCursorPosition(0, menuHeight);
+            FixConsolePosition();
+            Console.CursorVisible = false;
             Console.WriteLine("\nSelect an option:");
             Console.WriteLine("1. Pause Task Yet To Be Started");
             Console.WriteLine("2. Restart Paused Task");
@@ -37,11 +36,11 @@ internal class ConsoleDisplay
             switch (key)
             {
                 case ConsoleKey.D1:
-                    await HandlePauseTaskOption(taskService, value);
+                    await HandleTaskOption(value, PauseTaskAction, "PAUSE", "PAUSED");
                     break;
 
                 case ConsoleKey.D2:
-                    await RestartPausedTaskOption(taskService, value);
+                    await HandleTaskOption(value, RestartTaskAction, "RESTART", "RESTARTED");
                     break;
 
                 case ConsoleKey.Escape:
@@ -55,77 +54,57 @@ internal class ConsoleDisplay
         }
     }
 
-    private static async Task RestartPausedTaskOption(ITaskService taskService, Func<Task<IEnumerable<TaskEntity>>> value)
+    private async Task HandleTaskOption(Func<Task<IEnumerable<TaskEntity>>> value, Action<TaskEntity> taskAction, string actionDescription, string actionResult)
     {
-        Console.Clear();
-        Console.SetCursorPosition(0, menuHeight);
-        Console.WriteLine("\nEnter the ID of the paused task you want to restart:");
+        FixConsolePosition();
+        Console.WriteLine($"\nEnter the ID of the task you want to {actionDescription}:");
 
         int inputRow = Console.CursorTop;
 
-        if (int.TryParse(Console.ReadLine(), out int pausedTaskId))
+        if (int.TryParse(Console.ReadKey().Key.ToString().Replace("D", ""), out int taskId))
         {
-            var pausedTask = taskService.GetTaskById(pausedTaskId);
-            if (pausedTask != null && pausedTask.Status == TaskStatusEnum.Paused)
+            FixConsolePosition();
+            var task = taskService.GetTaskById(taskId);
+
+            if (task != null)
             {
-                pausedTask.Resume(); 
-                taskService.Update(pausedTask);
-
-                Console.SetCursorPosition(0, inputRow);
-                Console.Write(new string(' ', Console.WindowWidth));
-
-                Console.SetCursorPosition(0, inputRow);
-                Console.WriteLine($"\nTask ({pausedTask.Id}) restarted. Press Enter to continue...");
-                Console.ReadLine();
+                taskAction(task);
+                Console.WriteLine($"\nTask {task.Id} {actionResult}.");
+                taskService.Update(task);
             }
             else
-            {
-                Console.WriteLine("\nPaused task not found or not in a paused state. Press Enter to try again...");
-            }
+                Console.WriteLine("\nTask not found.");
         }
         else
         {
-            Console.WriteLine("\nInvalid input. Press Enter to try again...");
+            FixConsolePosition();
+            Console.WriteLine("\nInvalid input.");
         }
 
-        Console.WriteLine("Press Enter to continue...");
+        Console.WriteLine("Press any key to continue...");
+        Console.ReadLine();
         Console.Clear();
     }
 
-    private async Task HandlePauseTaskOption(ITaskService taskService, Func<Task<IEnumerable<TaskEntity>>> value)
+    private void PauseTaskAction(TaskEntity task)
+    {
+        if (task.Status != TaskStatusEnum.Paused)
+            task.Pause();
+        else
+            Console.WriteLine("Task is already paused.");
+    }
+
+    private void RestartTaskAction(TaskEntity task)
+    {
+        if (task.Status == TaskStatusEnum.Paused)
+            task.Resume();
+        else
+            Console.WriteLine("Task is not paused.");
+    }
+
+    private void FixConsolePosition()
     {
         Console.Clear();
         Console.SetCursorPosition(0, menuHeight);
-        Console.WriteLine("\nEnter the ID of the task you want to pause:");
-
-        int inputRow = Console.CursorTop;
-
-        if (int.TryParse(Console.ReadLine(), out int taskToPauseId))
-        {
-            var taskToPause = taskService.GetTaskById(taskToPauseId);
-            if (taskToPause != null && taskToPause.Status != TaskStatusEnum.Paused)
-            {
-                taskToPause.Pause();
-                taskService.Update(taskToPause);
-
-                Console.SetCursorPosition(0, inputRow);
-                Console.Write(new string(' ', Console.WindowWidth));
-
-                Console.SetCursorPosition(0, inputRow);
-                Console.WriteLine($"\nTask ({taskToPause.Id}) paused. Press Enter to continue...");
-                Console.ReadLine();
-            }
-            else
-            {
-                Console.WriteLine("\nTask not found. Press Enter to try again...");
-            }
-        }
-        else
-        {
-            Console.WriteLine("\nInvalid input. Press Enter to try again...");
-        }
-
-        Console.WriteLine("Press Enter to continue...");
-        Console.Clear();
     }
 }
